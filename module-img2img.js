@@ -28,7 +28,7 @@ export async function initialize(sharedUtils) {
         toggleRecycleBtn: document.getElementById('img2img-toggle-recycle-bin-btn'),
         zipBtn: document.getElementById('img2img-download-zip-btn'),
         zipFilenamePrefix: 'img2img-gallery',
-        onPreview: (image) => shared.showImagePreview(image)
+        onPreview: (image) => shared.openLightbox(image, galleryManager.getImages())
     });
     
     // --- Load Data from DB ---
@@ -79,4 +79,3 @@ export async function initialize(sharedUtils) {
         uploadInput.value = '';
     }
 }
-
