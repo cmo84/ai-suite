@@ -28,7 +28,7 @@ git ls-files | while read -r file; do
         "Dockerfile"|"CMakeLists.txt")
             is_text=1
             ;;
-        *.bat|*.sh|*.c|*.h|*.hh|*.html|*.css|*.js|*.jsx|*.json|*.txt|*.md|*.py|*.gitignore|*.gitattributes|*.gitmodules)
+        *.bat|*.sh|*.c|*.h|*.hh|*.html|*.css|*.js|*.jsx|*.json|*.txt|*.md|*.yml|*.py|*.gitignore|*.gitattributes|*.gitmodules)
             is_text=1
             ;;
     esac
