@@ -268,7 +268,7 @@ function getAppHTML() {
     `;
 }
 
-function loadAssets() {
+async function loadAssets() {
     const assetPath = window.assetPath;
     const cacheBust = window.cacheBust || '';
     if (!assetPath) {
@@ -282,11 +282,12 @@ function loadAssets() {
     link.href = `${assetPath}index.css${cacheBust}`;
     document.head.appendChild(link);
 
-    // Inject Import Map
+    // Inject Import Map first, ensuring module paths are defined before use.
     const importMap = document.createElement('script');
     importMap.type = 'importmap';
     importMap.textContent = JSON.stringify({
         imports: {
+            "suite-core.js": `${assetPath}suite-core.js${cacheBust}`,
             "db": `${assetPath}database.js${cacheBust}`,
             "api": `${assetPath}api-handler.js${cacheBust}`,
             "utils": `${assetPath}utils.js${cacheBust}`,
@@ -299,19 +300,17 @@ function loadAssets() {
     });
     document.head.appendChild(importMap);
 
-    // Inject and execute the core application logic
-    const coreScript = document.createElement('script');
-    coreScript.type = 'module';
-    coreScript.src = `${assetPath}suite-core.js${cacheBust}`;
-    document.head.appendChild(coreScript);
+    // Dynamically import the core application logic. This forces the browser
+    // to wait for the importmap to be processed before resolving 'suite-core.js'.
+    await import('suite-core.js');
 }
 
-function initializeApp() {
+async function initializeApp() {
     // 1. Inject the main HTML structure into the document body.
     document.body.innerHTML = getAppHTML();
     
     // 2. Load all versioned CSS and JS module assets from the CDN.
-    loadAssets();
+    await loadAssets();
 }
 
 // --- Start the application ---
