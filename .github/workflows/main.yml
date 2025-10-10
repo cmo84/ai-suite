@@ -9,7 +9,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     permissions:
       contents: write
 
@@ -24,11 +23,15 @@ jobs:
       - name: Create versioned directory
         run: mkdir -p dist/${{ env.VERSION }}
 
-      - name: Copy JS and CSS files to versioned directory
+      - name: Copy files to versioned directory
         run: |
-          cp *.js dist/${{ env.VERSION }}/
-          cp *.css dist/${{ env.VERSION }}/
+          cp main.js *.css database.js api-handler.js utils.js suite-core.js module-*.js dist/${{ env.VERSION }}/
           echo "Copied assets to dist/${{ env.VERSION }}/"
+          
+      - name: Copy files to root for latest build
+        run: |
+          cp main.js *.css database.js api-handler.js utils.js suite-core.js module-*.js dist/
+          echo "Copied assets to dist/ for latest build access."
 
       - name: Commit 'dist' folder to 'release' branch
         uses: s0/git-publish-subdir-action@develop
@@ -38,3 +41,4 @@ jobs:
           FOLDER: dist
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MESSAGE: "Build: ({sha}) {msg}"
+

@@ -3,11 +3,6 @@
  * This script injects the HTML structure, loads styles, and initializes the core application logic.
  */
 
-// --- CONFIGURATION ---
-// The SUITE_VERSION is inherited from the script tag in index.html, but we define a fallback.
-const APP_VERSION = window.SUITE_VERSION || "23"; 
-const REPO = window.repo || "cmo84/ai-suite@release";
-
 function getAppHTML() {
     return `
     <div id="suite-window" class="window">
@@ -240,16 +235,6 @@ function getAppHTML() {
     </div>
     
     <!-- Modals and other hidden elements -->
-    <div id="image-preview-modal" class="fixed inset-0 bg-black bg-opacity-80 flex-col items-center justify-center p-4 z-50 hidden" style="backdrop-filter: blur(5px);">
-        <button id="modal-close-btn" class="absolute top-4 right-4 text-white text-4xl font-bold">&times;</button>
-        <p id="modal-prompt" class="text-white text-center mb-4 p-2 bg-black/50 rounded-md"></p>
-        <img id="modal-image" src="" class="max-w-full max-h-[80vh] object-contain">
-        <div id="modal-vqa-container" class="mt-4 text-center">
-            <button id="modal-describe-btn" class="tool-btn tool-btn-secondary">✨ Describe Image</button>
-            <div id="modal-description" class="mt-2 text-gray-300 bg-black/50 p-3 rounded-md hidden max-w-2xl"></div>
-        </div>
-    </div>
-
     <div id="zip-filename-modal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
         <div class="tool-card bg-gray-800 w-full max-w-md">
             <h2 class="text-xl font-bold text-white mb-4">Name Your ZIP File</h2>
@@ -271,14 +256,30 @@ function getAppHTML() {
              </div>
         </div>
     </div>
+
+    <!-- Advanced Lightbox Structure -->
+    <div id="lightbox" class="hidden">
+        <span class="lightbox-close">&times;</span>
+        <span class="lightbox-filename"></span>
+        <div class="lightbox-prev">&#10094;</div>
+        <div class="lightbox-next">&#10095;</div>
+        <img class="lightbox-content">
+    </div>
     `;
 }
 
 function loadAssets() {
+    const assetPath = window.assetPath;
+    const cacheBust = window.cacheBust || '';
+    if (!assetPath) {
+        console.error("Asset path is not defined. Check the loader script in index.html.");
+        return;
+    }
+
     // Inject Stylesheet
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = `https://cdn.jsdelivr.net/gh/${REPO}/${APP_VERSION}/index.css`;
+    link.href = `${assetPath}index.css${cacheBust}`;
     document.head.appendChild(link);
 
     // Inject Import Map
@@ -286,14 +287,14 @@ function loadAssets() {
     importMap.type = 'importmap';
     importMap.textContent = JSON.stringify({
         imports: {
-            "db": `https://cdn.jsdelivr.net/gh/${REPO}/${APP_VERSION}/database.js`,
-            "api": `https://cdn.jsdelivr.net/gh/${REPO}/${APP_VERSION}/api-handler.js`,
-            "utils": `https://cdn.jsdelivr.net/gh/${REPO}/${APP_VERSION}/utils.js`,
-            "txt2img": `https://cdn.jsdelivr.net/gh/${REPO}/${APP_VERSION}/module-txt2img.js`,
-            "img2img": `https://cdn.jsdelivr.net/gh/${REPO}/${APP_VERSION}/module-img2img.js`,
-            "composer": `https://cdn.jsdelivr.net/gh/${REPO}/${APP_VERSION}/module-composer.js`,
-            "sketchpad": `https://cdn.jsdelivr.net/gh/${REPO}/${APP_VERSION}/module-sketchpad.js`,
-            "aim": `https://cdn.jsdelivr.net/gh/${REPO}/${APP_VERSION}/module-aim.js`
+            "db": `${assetPath}database.js${cacheBust}`,
+            "api": `${assetPath}api-handler.js${cacheBust}`,
+            "utils": `${assetPath}utils.js${cacheBust}`,
+            "txt2img": `${assetPath}module-txt2img.js${cacheBust}`,
+            "img2img": `${assetPath}module-img2img.js${cacheBust}`,
+            "composer": `${assetPath}module-composer.js${cacheBust}`,
+            "sketchpad": `${assetPath}module-sketchpad.js${cacheBust}`,
+            "aim": `${assetPath}module-aim.js${cacheBust}`
         }
     });
     document.head.appendChild(importMap);
@@ -301,7 +302,7 @@ function loadAssets() {
     // Inject and execute the core application logic
     const coreScript = document.createElement('script');
     coreScript.type = 'module';
-    coreScript.src = `https://cdn.jsdelivr.net/gh/${REPO}/${APP_VERSION}/suite-core.js`;
+    coreScript.src = `${assetPath}suite-core.js${cacheBust}`;
     document.head.appendChild(coreScript);
 }
 
