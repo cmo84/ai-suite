@@ -18,10 +18,10 @@ const safetySettings = [
 /**
  * Calls a Gemini text generation model.
  * @param {object} payload - The full payload for the generateContent API.
+ * @param {string} modelName - The name of the model to use.
  * @returns {Promise<string>} The generated text.
  */
-export async function callTextApi(payload) {
-    const modelName = "gemini-2.5-flash-preview-05-20";
+export async function callTextApi(payload, modelName = "gemini-2.5-flash-preview-05-20") {
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
     
     const finalPayload = { ...payload, safetySettings };
@@ -123,4 +123,3 @@ export async function callTtsApi(text, voiceName = 'Sulafat') {
         throw new Error("No audio data found in TTS API response.");
     }
 }
-
