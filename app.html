@@ -259,3 +259,33 @@
     <div class="lightbox-next">&#10095;</div>
     <img class="lightbox-content">
 </div>
+
+<!-- AIM Chat Window Template -->
+<template id="chat-window-template">
+    <div class="window chat-window">
+        <div class="title-bar">
+             <div class="title-bar-text"><span></span></div>
+             <div class="title-bar-buttons"><div class="title-bar-button close-btn">_</div></div>
+        </div>
+        <div class="window-body">
+            <div class="toolbar">
+                <select class="font-face"></select>
+                <select class="font-size"></select>
+                <label class="proactive-control"><input type="checkbox" class="proactive-toggle"> Proactive</label>
+                <select class="proactive-frequency"></select>
+                <label class="tts-control"><input type="checkbox" class="tts-toggle"> TTS</label>
+                <select class="tts-voice-select"></select>
+                <select class="model-select"></select>
+            </div>
+            <div class="messages"></div>
+            <div class="input-area p-2">
+                <textarea class="chat-input" placeholder="Type message..."></textarea>
+                <div class="chat-controls">
+                    <div class="loader"></div>
+                    <button class="send-btn aim-button">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
