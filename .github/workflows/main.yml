@@ -27,14 +27,20 @@ jobs:
 
       - name: Copy assets to versioned and root directories
         run: |
-          # Copy all .js, .css, and the new app.html file
+          # Copy all .js, .css, and the app.html file
           for file in *.js *.css app.html; do
             if [ -f "$file" ]; then
-              cp "$file" "dist/${{ env.VERSION }}/"
+              # Copy original filename to /latest/ for development/testing
               cp "$file" "dist/latest/"
+
+              # Create versioned filename (e.g., main.37.js) and copy to /${VERSION}/
+              basename="${file%.*}"
+              extension="${file##*.}"
+              versioned_file="${basename}.${{ env.VERSION }}.${extension}"
+              cp "$file" "dist/${{ env.VERSION }}/${versioned_file}"
             fi
           done
-          echo "Copied assets to dist/${{ env.VERSION }}/ and dist/latest/"
+          echo "Copied assets to dist/latest/ and dist/${{ env.VERSION }}/"
 
       - name: Commit 'dist' folder to 'release' branch
         uses: s0/git-publish-subdir-action@develop
@@ -44,9 +50,4 @@ jobs:
           FOLDER: dist
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MESSAGE: "Build: ({sha}) {msg}"
-
-      - name: Create Git Tag
-        run: |
-          git tag ${{ env.VERSION }}
-          git push origin ${{ env.VERSION }}
 

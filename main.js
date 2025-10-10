@@ -5,25 +5,25 @@
 
 async function loadAssets() {
     const assetPath = window.assetPath;
-    const cacheBust = window.cacheBust || '';
+    const versioned = window.getVersionedFilename; // Use the global function from index.html
 
     // Inject Stylesheet
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = `${assetPath}index.css${cacheBust}`;
+    link.href = `${assetPath}${versioned('index.css')}`;
     document.head.appendChild(link);
 
-    // Create and inject the import map
+    // Create and inject the import map with versioned URLs
     const importMap = {
         imports: {
-            "db": `${assetPath}database.js${cacheBust}`,
-            "api": `${assetPath}api-handler.js${cacheBust}`,
-            "utils": `${assetPath}utils.js${cacheBust}`,
-            "txt2img": `${assetPath}module-txt2img.js${cacheBust}`,
-            "img2img": `${assetPath}module-img2img.js${cacheBust}`,
-            "composer": `${assetPath}module-composer.js${cacheBust}`,
-            "sketchpad": `${assetPath}module-sketchpad.js${cacheBust}`,
-            "aim": `${assetPath}module-aim.js${cacheBust}`
+            "db": `${assetPath}${versioned('database.js')}`,
+            "api": `${assetPath}${versioned('api-handler.js')}`,
+            "utils": `${assetPath}${versioned('utils.js')}`,
+            "txt2img": `${assetPath}${versioned('module-txt2img.js')}`,
+            "img2img": `${assetPath}${versioned('module-img2img.js')}`,
+            "composer": `${assetPath}${versioned('module-composer.js')}`,
+            "sketchpad": `${assetPath}${versioned('module-sketchpad.js')}`,
+            "aim": `${assetPath}${versioned('module-aim.js')}`
         }
     };
     const im = document.createElement('script');
@@ -31,24 +31,24 @@ async function loadAssets() {
     im.textContent = JSON.stringify(importMap);
     document.head.appendChild(im);
 
-    // Dynamically import and initialize the core application logic
-    await import(`${assetPath}suite-core.js${cacheBust}`);
+    // Dynamically import and initialize the core application logic (filename is not versioned here)
+    await import(`${window.assetPath}${window.getVersionedFilename('suite-core.js')}`);
 }
 
 
 async function initializeApp() {
     const assetPath = window.assetPath;
-    const cacheBust = window.cacheBust || '';
+    const versioned = window.getVersionedFilename; // Use the global function from index.html
     if (!assetPath) {
         console.error("Asset path is not defined.");
         return;
     }
     
     try {
-        // 1. Fetch the main HTML structure from the CDN.
-        const response = await fetch(`${assetPath}app.html${cacheBust}`);
+        // 1. Fetch the main HTML structure from the CDN using the versioned filename.
+        const response = await fetch(`${assetPath}${versioned('app.html')}`);
         if (!response.ok) {
-            throw new Error(`Failed to load app.html: ${response.statusText}`);
+            throw new Error(`Failed to load ${versioned('app.html')}: ${response.statusText}`);
         }
         const html = await response.text();
         
@@ -72,4 +72,3 @@ async function initializeApp() {
 
 // --- Start the application ---
 initializeApp();
-
