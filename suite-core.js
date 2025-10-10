@@ -9,8 +9,11 @@ import * as composer from 'composer';
 import * as sketchpad from 'sketchpad';
 import * as aim from 'aim';
 
-// Defer execution until after the DOM has been updated by main.js
-setTimeout(() => {
+/**
+ * All application logic that depends on the DOM.
+ * This function will only be called after we confirm the DOM is ready.
+ */
+function initializeSuite() {
     // --- INITIALIZATION ---
     if (typeof window.SUITE_API_KEY !== 'undefined') {
         initializeApi(window.SUITE_API_KEY);
@@ -260,5 +263,21 @@ setTimeout(() => {
     composer.initialize(shared);
     sketchpad.initialize(shared);
     aim.initialize(shared);
-}, 0);
+}
+
+/**
+ * Polls the DOM to see if the main app container has been injected by main.js.
+ * Once it exists, the main application logic is initialized.
+ */
+function waitForDom() {
+    if (document.getElementById('suite-window')) {
+        initializeSuite();
+    } else {
+        // If not ready, check again on the next animation frame.
+        requestAnimationFrame(waitForDom);
+    }
+}
+
+// Start the polling process.
+waitForDom();
 
