@@ -152,10 +152,12 @@ export async function initialize(sharedUtils) {
             return;
         }
 
-        chatWindow = document.createElement('div');
+        const template = document.getElementById('chat-window-template');
+        const chatWindowContent = template.content.cloneNode(true);
+        chatWindow = chatWindowContent.querySelector('.window');
+        
         chatWindow.id = windowId;
         chatWindow.dataset.screenName = screenName;
-        chatWindow.className = 'window chat-window';
         
         if (buddyData.windowGeometry) Object.assign(chatWindow.style, buddyData.windowGeometry);
         else {
@@ -164,34 +166,16 @@ export async function initialize(sharedUtils) {
         }
         chatWindow.style.zIndex = getHighestZIndex() + 1;
         
-        chatWindow.innerHTML = `
-            <div class="title-bar">
-                 <div class="title-bar-text"><span>${screenName}</span></div>
-                 <div class="title-bar-buttons"><div class="title-bar-button" onclick="this.closest('.window').style.display='none'">_</div></div>
-            </div>
-            <div class="window-body">
-                <div class="toolbar">
-                    <select class="font-face"></select>
-                    <select class="font-size"></select>
-                    <label class="proactive-control"><input type="checkbox" class="proactive-toggle"> Proactive</label>
-                    <select class="proactive-frequency"></select>
-                    <label class="tts-control"><input type="checkbox" class="tts-toggle"> TTS</label>
-                    <select class="tts-voice-select"></select>
-                    <select class="model-select"></select>
-                </div>
-                <div class="messages"></div>
-                <div class="input-area p-2">
-                    <textarea class="chat-input" placeholder="Type message..."></textarea>
-                    <div class="chat-controls">
-                        <div class="loader"></div>
-                        <button class="send-btn aim-button">Send</button>
-                    </div>
-                </div>
-            </div>`;
+        // Set the window title
+        chatWindow.querySelector('.title-bar-text span').textContent = screenName;
+
         document.body.appendChild(chatWindow);
         chatWindow.style.display = 'flex';
         makeDraggable(chatWindow, saveWindowGeometry);
         
+        const closeBtn = chatWindow.querySelector('.close-btn');
+        closeBtn.onclick = () => chatWindow.style.display = 'none';
+
         const messagesContainer = chatWindow.querySelector('.messages');
         const input = chatWindow.querySelector('.chat-input');
         const sendBtn = chatWindow.querySelector('.send-btn');
