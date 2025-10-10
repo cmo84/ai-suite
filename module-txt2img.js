@@ -223,7 +223,7 @@ export async function initialize(sharedUtils) {
             }
             progressBar.style.width = `${(i / total) * 100}%`;
             // Simple delay to avoid hitting rate limits too hard
-            if (i < total) await new Promise(res => setTimeout(res, 500));
+            if (i < total) await new Promise(res => setTimeout(res, 1000));
         }
         
         progressTitle.textContent = isCancelled ? 'Generation Cancelled' : 'Generation Complete';
