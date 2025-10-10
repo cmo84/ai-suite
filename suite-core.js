@@ -39,56 +39,138 @@ tabs.forEach(tab => {
     });
 });
 
-// --- IMAGE PREVIEW MODAL ---
-const imagePreviewModal = document.getElementById('image-preview-modal');
-const modalImage = document.getElementById('modal-image');
-const modalCloseBtn = document.getElementById('modal-close-btn');
-const modalPrompt = document.getElementById('modal-prompt');
-const modalDescribeBtn = document.getElementById('modal-describe-btn');
-const modalDescription = document.getElementById('modal-description');
-let currentImageForVQA = null;
+// --- ADVANCED LIGHTBOX ---
+const lightbox = document.getElementById('lightbox');
+const lightboxImg = lightbox.querySelector('.lightbox-content');
+const lightboxFilename = lightbox.querySelector('.lightbox-filename');
+const lightboxClose = lightbox.querySelector('.lightbox-close');
+const lightboxPrev = lightbox.querySelector('.lightbox-prev');
+const lightboxNext = lightbox.querySelector('.lightbox-next');
 
-function showImagePreview(image) {
-    currentImageForVQA = image;
-    modalImage.src = `data:image/png;base64,${image.base64}`;
-    modalPrompt.textContent = image.prompt || 'No prompt available.';
-    modalDescription.classList.add('hidden');
-    modalDescription.textContent = '';
-    imagePreviewModal.style.display = 'flex';
+let lightboxImages = [];
+let currentLightboxIndex = 0;
+let isPanning = false;
+let hasDragged = false;
+let panStartX = 0, panStartY = 0;
+let translateX = 0, translateY = 0;
+let scale = 1;
+
+function openLightbox(images, startIndex) {
+    if (!images || images.length === 0) return;
+    lightboxImages = images;
+    currentLightboxIndex = startIndex;
+    updateLightboxImage();
+    lightbox.classList.remove('hidden');
+    document.addEventListener('keydown', handleKeyPress);
 }
 
-function hideImagePreview() {
-    imagePreviewModal.style.display = 'none';
-    modalImage.src = '';
-    modalPrompt.textContent = '';
-    currentImageForVQA = null;
+function closeLightbox() {
+    lightbox.classList.add('hidden');
+    document.removeEventListener('keydown', handleKeyPress);
 }
 
-modalCloseBtn.addEventListener('click', hideImagePreview);
-imagePreviewModal.addEventListener('click', (e) => {
-    if (e.target === imagePreviewModal) hideImagePreview();
+function updateLightboxImage() {
+    if (lightboxImages.length === 0) return;
+    const imageData = lightboxImages[currentLightboxIndex];
+    lightboxImg.src = `data:image/png;base64,${imageData.base64}`;
+    lightboxFilename.textContent = imageData.filename;
+    resetPanAndZoom(); 
+}
+
+function showNextImage() {
+    currentLightboxIndex = (currentLightboxIndex + 1) % lightboxImages.length;
+    updateLightboxImage();
+}
+
+function showPrevImage() {
+    currentLightboxIndex = (currentLightboxIndex - 1 + lightboxImages.length) % lightboxImages.length;
+    updateLightboxImage();
+}
+
+function toggleZoom() {
+    lightboxImg.classList.toggle('native-size');
+    if (!lightboxImg.classList.contains('native-size')) {
+        resetPanAndZoom();
+    }
+}
+
+function resetPanAndZoom() {
+    isPanning = false;
+    hasDragged = false;
+    translateX = 0;
+    translateY = 0;
+    scale = 1;
+    updateTransform();
+    lightboxImg.classList.remove('panning', 'native-size');
+}
+
+function updateTransform() {
+    lightboxImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+}
+
+function handleKeyPress(e) {
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowRight') showNextImage();
+    if (e.key === 'ArrowLeft') showPrevImage();
+}
+
+lightboxClose.addEventListener('click', closeLightbox);
+lightboxNext.addEventListener('click', showNextImage);
+lightboxPrev.addEventListener('click', showPrevImage);
+lightbox.addEventListener('click', (e) => {
+    if (e.target === lightbox) closeLightbox();
 });
-modalDescribeBtn.addEventListener('click', async () => {
-    if (!currentImageForVQA) return;
-    modalDescription.textContent = 'Describing...';
-    modalDescription.classList.remove('hidden');
-    
-    try {
-        const { callTextApi } = await import('api');
-        const payload = {
-            contents: [{
-                parts: [
-                    { text: "Describe this image in a vivid and detailed paragraph. Focus on the mood, atmosphere, and key visual elements." },
-                    { inlineData: { mimeType: "image/png", data: currentImageForVQA.base64 } }
-                ]
-            }],
-        };
-        const description = await callTextApi(payload);
-        modalDescription.innerHTML = description.replace(/\n/g, '<br>');
-    } catch(e) {
-        modalDescription.textContent = `Error: ${e.message}`;
+
+lightboxImg.addEventListener('mousedown', (e) => {
+    e.preventDefault(); 
+    if (lightboxImg.classList.contains('native-size')) {
+        isPanning = true;
+        panStartX = e.clientX - translateX;
+        panStartY = e.clientY - translateY;
+        lightboxImg.classList.add('panning');
+    }
+    hasDragged = false; 
+});
+
+lightboxImg.addEventListener('mousemove', (e) => {
+    e.preventDefault();
+    if (isPanning) {
+        hasDragged = true; 
+        translateX = e.clientX - panStartX;
+        translateY = e.clientY - panStartY;
+        updateTransform();
     }
 });
+
+lightboxImg.addEventListener('mouseup', () => {
+    isPanning = false;
+    lightboxImg.classList.remove('panning');
+    if (!hasDragged) toggleZoom();
+});
+
+lightboxImg.addEventListener('mouseleave', () => {
+    if (isPanning) {
+        isPanning = false;
+        lightboxImg.classList.remove('panning');
+    }
+});
+
+lightbox.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const zoomSpeed = 0.1;
+    const zoomDirection = e.deltaY < 0 ? 1 : -1;
+    if (zoomDirection > 0 && !lightboxImg.classList.contains('native-size')) {
+        lightboxImg.classList.add('native-size');
+    }
+    scale += zoomDirection * zoomSpeed;
+    if (scale < 1) {
+        resetPanAndZoom();
+        return;
+    }
+    scale = Math.max(1, Math.min(scale, 5));
+    updateTransform();
+});
+
 
 // --- ZIP MODAL ---
 const zipFilenameModal = document.getElementById('zip-filename-modal');
@@ -168,9 +250,9 @@ cancelCropBtn.addEventListener('click', hideCropModal);
 
 // --- INITIALIZE ALL MODULES ---
 const shared = { 
-    showImagePreview, 
     showZipModal, 
-    showCropModal
+    showCropModal,
+    openLightbox
 };
 txt2img.initialize(shared);
 img2img.initialize(shared);

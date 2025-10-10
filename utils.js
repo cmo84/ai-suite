@@ -61,7 +61,12 @@ export function createImageGallery(config) {
         const previewBtn = document.createElement('button');
         previewBtn.className = 'overlay-btn';
         previewBtn.innerHTML = '&#128269;'; // Magnifying glass
-        previewBtn.onclick = (e) => { e.stopPropagation(); config.onPreview(image); };
+        previewBtn.onclick = (e) => {
+            e.stopPropagation();
+            const activeImages = gallery.filter(img => img.status === 'active');
+            const currentIndex = activeImages.findIndex(img => img.id === image.id);
+            config.shared.openLightbox(activeImages, currentIndex);
+        };
         
         const downloadLink = document.createElement('a');
         const processedBase64 = await pngMetadata.encode(image.base64, 'prompt', image.prompt || '');

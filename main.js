@@ -5,7 +5,7 @@
 
 // --- CONFIGURATION ---
 // The SUITE_VERSION is inherited from the script tag in index.html, but we define a fallback.
-const APP_VERSION = window.SUITE_VERSION || "20"; 
+const APP_VERSION = window.SUITE_VERSION || "21"; 
 const REPO = window.repo || "cmo84/ai-suite@release";
 
 function getAppHTML() {
