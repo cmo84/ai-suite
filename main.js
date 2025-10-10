@@ -5,6 +5,7 @@
 
 function getAppHTML() {
     return `
+    <div id="notification-container"></div>
     <div id="suite-window" class="window">
          <div class="title-bar">
             <div class="title-bar-text">
@@ -315,4 +316,5 @@ async function initializeApp() {
 
 // --- Start the application ---
 initializeApp();
+
 

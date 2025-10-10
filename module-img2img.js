@@ -48,20 +48,28 @@ export async function initialize(sharedUtils) {
         if (e.target.files[0]) handleFileUpload(e.target.files[0]);
     });
     
-    refineBtn.addEventListener('click', () => handleApiAction(refineBtn, loader, errorEl, async () => {
+    refineBtn.addEventListener('click', () => {
         const prompt = promptInput.value.trim();
         if (!prompt || !baseImage) {
-            alert('Please upload an image and provide a prompt.');
+            errorEl.textContent = 'Please upload an image and provide a prompt.';
+            errorEl.style.display = 'block';
+            setTimeout(() => { 
+                errorEl.style.display = 'none'; 
+                errorEl.textContent = '';
+            }, 3000);
             return;
         }
-        const payload = {
-            contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: "image/png", data: baseImage.base64 } }] }],
-            generationConfig: { responseModalities: ['IMAGE'] }
-        };
-        const newBase64 = await api.callImageApi(payload);
-        const newImage = galleryManager.addImage({ base64: newBase64, prompt, generationType: 'img2img', parentId: 'uploaded' });
-        await db.saveImage('img2img', newImage);
-    }));
+
+        handleApiAction(refineBtn, loader, errorEl, async () => {
+            const payload = {
+                contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: "image/png", data: baseImage.base64 } }] }],
+                generationConfig: { responseModalities: ['IMAGE'] }
+            };
+            const newBase64 = await api.callImageApi(payload);
+            const newImage = galleryManager.addImage({ base64: newBase64, prompt, generationType: 'img2img', parentId: 'uploaded' });
+            await db.saveImage('img2img', newImage);
+        });
+    });
 
     // --- Functions ---
     async function handleFileUpload(file) {
@@ -79,3 +87,4 @@ export async function initialize(sharedUtils) {
         uploadInput.value = '';
     }
 }
+

@@ -47,7 +47,7 @@ export async function initialize(sharedUtils) {
     // --- Event Listeners ---
     saveProfileBtn.addEventListener('click', async () => {
         await db.saveAppState('userProfile', userProfileText.value.trim());
-        alert('Profile saved!');
+        shared.showNotification('Profile saved!');
     });
 
     addBuddyBtn.addEventListener('click', async () => {
@@ -72,8 +72,11 @@ export async function initialize(sharedUtils) {
             nameInput.value = '';
             personalityInput.value = '';
             renderBuddyList();
+            shared.showNotification(`Buddy "${screenName}" added.`);
         } else if (buddies[screenName]) {
-            alert("A buddy with that screen name already exists.");
+            shared.showNotification("A buddy with that screen name already exists.", 'error');
+        } else {
+             shared.showNotification("Please provide a screen name and personality.", 'error');
         }
     });
 
@@ -106,9 +109,12 @@ export async function initialize(sharedUtils) {
                     for(const [screenName, history] of Object.entries(importedData.conversations)) { await db.saveConversation(screenName, history); }
                     if(importedData.appState?.userProfile) await db.saveAppState('userProfile', importedData.appState.userProfile);
                     await loadState();
-                    alert('Data imported successfully!');
-                } else alert('Invalid JSON file.');
-            } catch (error) { alert('Error reading file.'); console.error("Import error:", error); }
+                    shared.showNotification('Data imported successfully!');
+                } else shared.showNotification('Invalid JSON file.', 'error');
+            } catch (error) { 
+                shared.showNotification('Error reading file.', 'error');
+                console.error("Import error:", error); 
+            }
         };
         reader.readAsText(file);
         importFile.value = '';
@@ -404,4 +410,3 @@ export async function initialize(sharedUtils) {
     await loadState();
     proactiveIntervalCheck = setInterval(proactiveEngine, 5000);
 }
-

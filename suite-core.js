@@ -1,7 +1,7 @@
 /**
  * @description Core application logic, UI initialization, and module loading.
  */
-import { initializeApi } from 'api';
+
 import { makeDraggable } from 'utils';
 import * as txt2img from 'txt2img';
 import * as img2img from 'img2img';
@@ -9,18 +9,32 @@ import * as composer from 'composer';
 import * as sketchpad from 'sketchpad';
 import * as aim from 'aim';
 
-/**
- * All application logic that depends on the DOM.
- * This function will only be called after we confirm the DOM is ready.
- */
-function initializeSuite() {
+function waitForElement(selector) {
+    return new Promise(resolve => {
+        if (document.querySelector(selector)) {
+            return resolve(document.querySelector(selector));
+        }
+        const observer = new MutationObserver(() => {
+            if (document.querySelector(selector)) {
+                resolve(document.querySelector(selector));
+                observer.disconnect();
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+    });
+}
+
+async function initializeCore() {
+    await waitForElement('#suite-window');
+
     // --- INITIALIZATION ---
+    const { initializeApi } = await import('api');
     if (typeof window.SUITE_API_KEY !== 'undefined') {
         initializeApi(window.SUITE_API_KEY);
     } else {
         console.error("API Key not found.");
     }
-
+    
     const suiteWindow = document.getElementById('suite-window');
     makeDraggable(suiteWindow);
 
@@ -37,13 +51,19 @@ function initializeSuite() {
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
             const targetTab = tab.dataset.tab;
+            tabs.forEach(t => t.classList.remove('mode-button-active'));
+            tab.classList.add('mode-button-active');
             tabContents.forEach(content => content.classList.remove('active'));
             document.getElementById(`${targetTab}-tab`).classList.add('active');
             window.dispatchEvent(new Event('resize'));
         });
     });
-
-    // --- ADVANCED LIGHTBOX ---
+     // Activate the first tab by default
+    if (tabs.length > 0) {
+        tabs[0].classList.add('mode-button-active');
+    }
+    
+    // --- LIGHTBOX ---
     const lightbox = document.getElementById('lightbox');
     const lightboxImg = lightbox.querySelector('.lightbox-content');
     const lightboxFilename = lightbox.querySelector('.lightbox-filename');
@@ -52,17 +72,19 @@ function initializeSuite() {
     const lightboxNext = lightbox.querySelector('.lightbox-next');
 
     let lightboxImages = [];
-    let currentLightboxIndex = 0;
+    let currentImageIndex = 0;
+
     let isPanning = false;
     let hasDragged = false;
     let panStartX = 0, panStartY = 0;
     let translateX = 0, translateY = 0;
     let scale = 1;
 
-    function openLightbox(images, startIndex) {
-        if (!images || images.length === 0) return;
-        lightboxImages = images;
-        currentLightboxIndex = startIndex;
+    function openLightbox(selectedImage, allImages) {
+        lightboxImages = allImages;
+        const selectedIndex = lightboxImages.findIndex(img => img.id === selectedImage.id);
+        if (selectedIndex === -1) return;
+        currentImageIndex = selectedIndex;
         updateLightboxImage();
         lightbox.classList.remove('hidden');
         document.addEventListener('keydown', handleKeyPress);
@@ -75,29 +97,22 @@ function initializeSuite() {
 
     function updateLightboxImage() {
         if (lightboxImages.length === 0) return;
-        const imageData = lightboxImages[currentLightboxIndex];
+        const imageData = lightboxImages[currentImageIndex];
         lightboxImg.src = `data:image/png;base64,${imageData.base64}`;
         lightboxFilename.textContent = imageData.filename;
-        resetPanAndZoom(); 
+        resetPanAndZoom();
     }
 
     function showNextImage() {
-        currentLightboxIndex = (currentLightboxIndex + 1) % lightboxImages.length;
+        currentImageIndex = (currentImageIndex + 1) % lightboxImages.length;
         updateLightboxImage();
     }
 
     function showPrevImage() {
-        currentLightboxIndex = (currentLightboxIndex - 1 + lightboxImages.length) % lightboxImages.length;
+        currentImageIndex = (currentImageIndex - 1 + lightboxImages.length) % lightboxImages.length;
         updateLightboxImage();
     }
-
-    function toggleZoom() {
-        lightboxImg.classList.toggle('native-size');
-        if (!lightboxImg.classList.contains('native-size')) {
-            resetPanAndZoom();
-        }
-    }
-
+    
     function resetPanAndZoom() {
         isPanning = false;
         hasDragged = false;
@@ -118,103 +133,30 @@ function initializeSuite() {
         if (e.key === 'ArrowLeft') showPrevImage();
     }
 
+    function toggleZoom() {
+        lightboxImg.classList.toggle('native-size');
+        if (!lightboxImg.classList.contains('native-size')) {
+            resetPanAndZoom();
+        }
+    }
+    
     lightboxClose.addEventListener('click', closeLightbox);
     lightboxNext.addEventListener('click', showNextImage);
     lightboxPrev.addEventListener('click', showPrevImage);
-    lightbox.addEventListener('click', (e) => {
-        if (e.target === lightbox) closeLightbox();
-    });
+    lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
 
-    lightboxImg.addEventListener('mousedown', (e) => {
-        e.preventDefault(); 
-        if (lightboxImg.classList.contains('native-size')) {
-            isPanning = true;
-            panStartX = e.clientX - translateX;
-            panStartY = e.clientY - translateY;
-            lightboxImg.classList.add('panning');
-        }
-        hasDragged = false; 
-    });
+    lightboxImg.addEventListener('mousedown', (e) => { e.preventDefault(); if (lightboxImg.classList.contains('native-size')) { isPanning = true; panStartX = e.clientX - translateX; panStartY = e.clientY - translateY; lightboxImg.classList.add('panning'); } hasDragged = false; });
+    lightboxImg.addEventListener('mousemove', (e) => { e.preventDefault(); if (isPanning) { hasDragged = true; translateX = e.clientX - panStartX; translateY = e.clientY - panStartY; updateTransform(); } });
+    lightboxImg.addEventListener('mouseup', () => { isPanning = false; lightboxImg.classList.remove('panning'); if (!hasDragged) { toggleZoom(); } });
+    lightboxImg.addEventListener('mouseleave', () => { if (isPanning) { isPanning = false; lightboxImg.classList.remove('panning'); } });
+    lightbox.addEventListener('wheel', (e) => { e.preventDefault(); const zoomSpeed = 0.1; const zoomDirection = e.deltaY < 0 ? 1 : -1; if (zoomDirection > 0 && !lightboxImg.classList.contains('native-size')) { lightboxImg.classList.add('native-size'); } scale += zoomDirection * zoomSpeed; if (scale < 1) { resetPanAndZoom(); return; } scale = Math.max(1, Math.min(scale, 5)); updateTransform(); });
 
-    lightboxImg.addEventListener('mousemove', (e) => {
-        e.preventDefault();
-        if (isPanning) {
-            hasDragged = true; 
-            translateX = e.clientX - panStartX;
-            translateY = e.clientY - panStartY;
-            updateTransform();
-        }
-    });
-
-    lightboxImg.addEventListener('mouseup', () => {
-        isPanning = false;
-        lightboxImg.classList.remove('panning');
-        if (!hasDragged) toggleZoom();
-    });
-
-    lightboxImg.addEventListener('mouseleave', () => {
-        if (isPanning) {
-            isPanning = false;
-            lightboxImg.classList.remove('panning');
-        }
-    });
-
-    lightbox.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        const zoomSpeed = 0.1;
-        const zoomDirection = e.deltaY < 0 ? 1 : -1;
-        if (zoomDirection > 0 && !lightboxImg.classList.contains('native-size')) {
-            lightboxImg.classList.add('native-size');
-        }
-        scale += zoomDirection * zoomSpeed;
-        if (scale < 1) {
-            resetPanAndZoom();
-            return;
-        }
-        scale = Math.max(1, Math.min(scale, 5));
-        updateTransform();
-    });
-
-
-    // --- ZIP MODAL ---
-    const zipFilenameModal = document.getElementById('zip-filename-modal');
-    const zipFilenameInput = zipFilenameModal.querySelector('#zip-filename-input');
-    const saveZipBtn = zipFilenameModal.querySelector('#save-zip-btn');
-    const cancelZipBtn = zipFilenameModal.querySelector('#cancel-zip-btn');
-    let zipPromiseResolve = null;
-
-    function showZipModal(suggestedName) {
-        return new Promise(resolve => {
-            zipPromiseResolve = resolve;
-            zipFilenameInput.value = suggestedName;
-            zipFilenameModal.style.display = 'flex';
-            zipFilenameInput.focus();
-            zipFilenameInput.select();
-        });
-    }
-
-    function hideZipModal() {
-        zipFilenameModal.style.display = 'none';
-        if (zipPromiseResolve) {
-            zipPromiseResolve(null);
-            zipPromiseResolve = null;
-        }
-    }
-
-    saveZipBtn.addEventListener('click', () => {
-        if (zipPromiseResolve) {
-            zipPromiseResolve(zipFilenameInput.value.trim() || 'image-gallery');
-            zipPromiseResolve = null;
-        }
-        zipFilenameModal.style.display = 'none';
-    });
-    cancelZipBtn.addEventListener('click', hideZipModal);
 
     // --- CROP MODAL ---
     const cropModal = document.getElementById('crop-modal');
-    const cropImageTarget = cropModal.querySelector('#crop-image-target');
-    const confirmCropBtn = cropModal.querySelector('#confirm-crop-btn');
-    const cancelCropBtn = cropModal.querySelector('#cancel-crop-btn');
+    const cropImageTarget = document.getElementById('crop-image-target');
+    const confirmCropBtn = document.getElementById('confirm-crop-btn');
+    const cancelCropBtn = document.getElementById('cancel-crop-btn');
     let cropPromiseResolve = null;
     let cropperInstance = null;
 
@@ -240,7 +182,7 @@ function initializeSuite() {
             cropPromiseResolve = null;
         }
     }
-
+    
     confirmCropBtn.addEventListener('click', () => {
         if (cropperInstance && cropPromiseResolve) {
             const base64 = cropperInstance.getCroppedCanvas({
@@ -251,12 +193,25 @@ function initializeSuite() {
         hideCropModal();
     });
     cancelCropBtn.addEventListener('click', hideCropModal);
-
+    
+    // --- NOTIFICATION SYSTEM ---
+    const notificationContainer = document.getElementById('notification-container');
+    function showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        notificationContainer.appendChild(notification);
+        setTimeout(() => {
+            notification.classList.add('fade-out');
+            notification.addEventListener('transitionend', () => notification.remove());
+        }, 3000);
+    }
+    
     // --- INITIALIZE ALL MODULES ---
     const shared = { 
-        showZipModal, 
+        openLightbox,
         showCropModal,
-        openLightbox
+        showNotification
     };
     txt2img.initialize(shared);
     img2img.initialize(shared);
@@ -265,19 +220,5 @@ function initializeSuite() {
     aim.initialize(shared);
 }
 
-/**
- * Polls the DOM to see if the main app container has been injected by main.js.
- * Once it exists, the main application logic is initialized.
- */
-function waitForDom() {
-    if (document.getElementById('suite-window')) {
-        initializeSuite();
-    } else {
-        // If not ready, check again on the next animation frame.
-        requestAnimationFrame(waitForDom);
-    }
-}
-
-// Start the polling process.
-waitForDom();
+initializeCore();
 
