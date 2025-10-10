@@ -152,6 +152,43 @@ async function initializeCore() {
     lightbox.addEventListener('wheel', (e) => { e.preventDefault(); const zoomSpeed = 0.1; const zoomDirection = e.deltaY < 0 ? 1 : -1; if (zoomDirection > 0 && !lightboxImg.classList.contains('native-size')) { lightboxImg.classList.add('native-size'); } scale += zoomDirection * zoomSpeed; if (scale < 1) { resetPanAndZoom(); return; } scale = Math.max(1, Math.min(scale, 5)); updateTransform(); });
 
 
+    // --- ZIP MODAL ---
+    const zipModal = document.getElementById('zip-filename-modal');
+    const zipInput = document.getElementById('zip-filename-input');
+    const saveZipBtn = document.getElementById('save-zip-btn');
+    const cancelZipBtn = document.getElementById('cancel-zip-btn');
+    let zipPromiseResolve = null;
+
+    function showZipModal(suggestedName) {
+        return new Promise(resolve => {
+            zipPromiseResolve = resolve;
+            zipInput.value = suggestedName;
+            zipModal.style.display = 'flex';
+            zipInput.focus();
+            zipInput.select();
+        });
+    }
+
+    function hideZipModal(value) {
+        zipModal.style.display = 'none';
+        if (zipPromiseResolve) {
+            zipPromiseResolve(value);
+            zipPromiseResolve = null;
+        }
+    }
+
+    saveZipBtn.addEventListener('click', () => hideZipModal(zipInput.value.trim() || zipInput.placeholder));
+    cancelZipBtn.addEventListener('click', () => hideZipModal(null));
+    zipInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            hideZipModal(zipInput.value.trim() || zipInput.placeholder);
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            hideZipModal(null);
+        }
+    });
+
     // --- CROP MODAL ---
     const cropModal = document.getElementById('crop-modal');
     const cropImageTarget = document.getElementById('crop-image-target');
@@ -211,7 +248,8 @@ async function initializeCore() {
     const shared = { 
         openLightbox,
         showCropModal,
-        showNotification
+        showNotification,
+        showZipModal
     };
     txt2img.initialize(shared);
     img2img.initialize(shared);

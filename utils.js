@@ -64,8 +64,7 @@ export function createImageGallery(config) {
         previewBtn.onclick = (e) => {
             e.stopPropagation();
             const activeImages = gallery.filter(img => img.status === 'active');
-            const currentIndex = activeImages.findIndex(img => img.id === image.id);
-            config.shared.openLightbox(activeImages, currentIndex);
+            config.shared.openLightbox(image, activeImages);
         };
         
         const downloadLink = document.createElement('a');
