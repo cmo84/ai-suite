@@ -23,6 +23,11 @@ export async function initialize(sharedUtils) {
     const loader = document.getElementById('image-loader');
     const errorEl = document.getElementById('image-error');
 
+    // --- Preview Pane Elements ---
+    const previewPane = document.getElementById('txt2img-preview-pane');
+    const previewImage = document.getElementById('txt2img-preview-image');
+    const previewInfo = document.getElementById('txt2img-preview-info');
+
     // --- Initialize Gallery ---
     galleryManager = createImageGallery({
         mainContainer: document.getElementById('gallery-container'),
@@ -31,12 +36,71 @@ export async function initialize(sharedUtils) {
         toggleRecycleBtn: document.getElementById('toggle-recycle-bin-btn'),
         zipBtn: downloadZipBtn,
         zipFilenamePrefix: 'txt2img-gallery',
-        onSelect: (image) => {
-            document.getElementById('refinement-controls').style.display = image ? 'block' : 'none';
-            if(image) refinementPrompt.focus();
+        onSelect: (image, allImages) => {
+            const refinementControls = document.getElementById('refinement-controls');
+            if (image) {
+                refinementControls.style.display = 'block';
+                refinementPrompt.focus();
+                
+                previewPane.classList.remove('hidden');
+                previewImage.src = `data:image/png;base64,${image.base64}`;
+
+                let detailsHTML = `<h3 class="font-bold mb-2 break-all">${image.filename}</h3>`;
+                 if (image.generationType === 'base' || image.generationType === 'upload') {
+                    detailsHTML += `<p class="font-bold">Base Prompt:</p><p class="break-words">${image.prompt}</p>`;
+                } else {
+                    const parentImage = allImages.find(img => img.id === image.parentId);
+                    detailsHTML += `<p class="font-bold">Refined from:</p><p class="break-words">${parentImage?.filename || 'Unknown'}</p>`;
+                    detailsHTML += `<p class="font-bold mt-2">Refinement Prompt:</p><p class="break-words">${image.prompt}</p>`;
+                }
+                
+                const fullPreviewHTML = `
+                    <div id="image-details-content">${detailsHTML}</div>
+                    <div class="mt-2">
+                        <button id="describe-image-btn" class="tool-btn tool-btn-secondary text-xs py-1 px-2">✨ Describe</button>
+                        <div id="image-description-container" class="mt-1 text-gray-400 bg-gray-900/50 p-2 rounded-md hidden"></div>
+                    </div>`;
+                previewInfo.innerHTML = fullPreviewHTML;
+                
+                document.getElementById('describe-image-btn').addEventListener('click', () => describeImage(image));
+
+            } else {
+                refinementControls.style.display = 'none';
+                previewPane.classList.add('hidden');
+            }
         },
-        onPreview: (image) => shared.showImagePreview(image)
+        onPreview: (image) => shared.showImagePreview(image),
+        shared: shared
     });
+
+    async function describeImage(image) {
+        const describeBtn = document.getElementById('describe-image-btn');
+        const descriptionContainer = document.getElementById('image-description-container');
+        
+        describeBtn.disabled = true;
+        describeBtn.innerHTML = '...';
+        descriptionContainer.classList.remove('hidden');
+        descriptionContainer.innerHTML = 'Generating description...';
+
+        try {
+            const payload = {
+                contents: [{
+                    parts: [
+                        { text: "Describe this image in a concise but evocative paragraph." },
+                        { inlineData: { mimeType: "image/png", data: image.base64 } }
+                    ]
+                }],
+            };
+            const description = await api.callTextApi(payload);
+            descriptionContainer.textContent = description.trim();
+        } catch (error) {
+            descriptionContainer.textContent = `Error: ${error.message}`;
+        } finally {
+            describeBtn.disabled = false;
+            describeBtn.innerHTML = '✨ Describe';
+        }
+    }
+
 
     // --- Load Data from DB ---
     const savedImages = await db.loadImages('txt2img');
@@ -103,31 +167,69 @@ export async function initialize(sharedUtils) {
     
     async function handleBatchGeneration(prompt, total) {
         let isCancelled = false;
-        shared.showBatchProgressModal();
+        
+        // --- Non-Modal Progress UI Elements ---
+        const progressContainer = document.getElementById('generation-progress-container');
+        const progressTitle = document.getElementById('progress-title');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const successCountEl = document.getElementById('success-count');
+        const failureCountEl = document.getElementById('failure-count');
+        const errorListContainer = document.getElementById('error-list-container');
+        const errorList = document.getElementById('error-list');
+        const closeProgressBtn = document.getElementById('close-progress-btn');
         const cancelBtn = document.getElementById('cancel-generation-btn');
-        const onCancel = () => isCancelled = true;
+
+        // --- Reset and Show UI ---
+        progressContainer.classList.remove('hidden');
+        progressTitle.textContent = 'Generation Progress';
+        progressText.textContent = 'Initializing...';
+        progressBar.style.width = '0%';
+        successCountEl.textContent = '0';
+        failureCountEl.textContent = '0';
+        errorList.innerHTML = '';
+        errorListContainer.classList.add('hidden');
+        closeProgressBtn.classList.add('hidden');
+        cancelBtn.classList.remove('hidden');
+        cancelBtn.disabled = false;
+
+        const onCancel = () => {
+            isCancelled = true;
+            cancelBtn.disabled = true;
+            progressText.textContent = "Cancelling... waiting for current image to finish.";
+        };
         cancelBtn.addEventListener('click', onCancel, { once: true });
+        closeProgressBtn.onclick = () => progressContainer.classList.add('hidden');
         
         let successes = 0;
         let failures = 0;
         
         for (let i = 1; i <= total; i++) {
             if (isCancelled) break;
+            progressText.textContent = `Generating image ${i} of ${total}...`;
             try {
                 const base64 = await api.callImageApi({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseModalities: ['IMAGE'] } });
                 const newImage = galleryManager.addImage({ base64, prompt, generationType: 'base', parentId: null });
                 await db.saveImage('txt2img', newImage);
                 successes++;
-                shared.updateBatchProgress(i, total, successes, failures);
+                successCountEl.textContent = successes;
             } catch (e) {
                 failures++;
-                shared.updateBatchProgress(i, total, successes, failures, e.message);
+                failureCountEl.textContent = failures;
+                const li = document.createElement('li');
+                li.textContent = `Image ${i}: ${e.message}`;
+                errorList.appendChild(li);
+                errorListContainer.classList.remove('hidden');
             }
+            progressBar.style.width = `${(i / total) * 100}%`;
             // Simple delay to avoid hitting rate limits too hard
             if (i < total) await new Promise(res => setTimeout(res, 500));
         }
         
-        shared.finishBatchProgress(isCancelled);
+        progressTitle.textContent = isCancelled ? 'Generation Cancelled' : 'Generation Complete';
+        progressText.textContent = isCancelled ? 'Stopped by user.' : 'Finished.';
+        cancelBtn.classList.add('hidden');
+        closeProgressBtn.classList.remove('hidden');
         cancelBtn.removeEventListener('click', onCancel);
     }
 }

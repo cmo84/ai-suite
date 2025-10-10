@@ -1,6 +1,7 @@
 /**
  * @description Shared utility functions for the Master Creative AI Suite.
  */
+import { callTextApi } from 'api';
 
 /**
  * A factory function to create and manage an image gallery instance.
@@ -49,7 +50,7 @@ export function createImageGallery(config) {
             if (image.id === selectedId) img.classList.add('selected');
             wrapper.addEventListener('click', () => {
                 selectedId = image.id;
-                if(config.onSelect) config.onSelect(image);
+                if(config.onSelect) config.onSelect(image, gallery);
                 render();
             });
         }
@@ -80,7 +81,7 @@ export function createImageGallery(config) {
                 image.status = 'discarded';
                 if (image.id === selectedId) {
                     selectedId = null;
-                    if(config.onSelect) config.onSelect(null);
+                    if(config.onSelect) config.onSelect(null, gallery);
                 }
                 render();
             };
@@ -114,6 +115,13 @@ export function createImageGallery(config) {
             }
         });
     }
+
+    if(config.zipBtn) {
+        config.zipBtn.addEventListener('click', () => {
+            const activeImages = gallery.filter(img => img.status === 'active');
+            downloadGalleryAsZip(activeImages, gallery, config.shared, config.zipFilenamePrefix);
+        });
+    }
     
     return {
         addImage: (imageData) => {
@@ -145,6 +153,73 @@ export function createImageGallery(config) {
         }
     };
 }
+
+/**
+ * Handles the complete process of creating and downloading a ZIP archive of images.
+ * @param {Array} activeImages - The images to include in the zip.
+ * @param {Array} allImages - The full gallery for parent lookups.
+ * @param {object} shared - Shared utilities from suite-core.
+ * @param {string} filenamePrefix - The default prefix for the zip file.
+ */
+async function downloadGalleryAsZip(activeImages, allImages, shared, filenamePrefix) {
+    if (activeImages.length === 0) return;
+
+    let suggestedName = filenamePrefix || 'image-gallery';
+    try {
+        const allPrompts = activeImages.map(img => img.prompt).filter(Boolean).join('; ');
+        if (allPrompts) {
+            const systemPrompt = "You are a file naming assistant. Read the image prompts. Create a 3-5 word, file-safe summary name. Your response must be ONLY the name. Example input: 'a red car; a blue boat'. Example output: 'red-car-blue-boat'.";
+            const userQuery = `Generate a filename summary for these prompts: "${allPrompts}"`;
+            const apiSuggestedName = await callTextApi({
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] }
+            });
+            if (apiSuggestedName) {
+                suggestedName = apiSuggestedName.trim().toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
+            }
+        }
+    } catch (nameError) {
+        console.error("Error generating zip name:", nameError);
+    }
+    
+    const zipName = await shared.showZipModal(suggestedName);
+    if (!zipName) return; // User cancelled
+
+    try {
+        const zip = new JSZip();
+        const promptsData = [];
+        const manifestData = { media: [] };
+
+        for(const image of activeImages) {
+            const processedBase64 = await pngMetadata.encode(image.base64, 'prompt', image.prompt || '');
+            zip.file(image.filename, processedBase64, { base64: true });
+            promptsData.push({
+                filename: image.filename,
+                generationType: image.generationType,
+                prompt: image.prompt,
+                parentId: image.parentId,
+                parentFilename: allImages.find(p => p.id === image.parentId)?.filename || null,
+            });
+            manifestData.media.push({ type: "image", src: image.filename });
+        }
+        
+        zip.file("prompts.json", JSON.stringify(promptsData, null, 2));
+        zip.file("manifest.json", JSON.stringify(manifestData, null, 2));
+
+        const content = await zip.generateAsync({ type: 'blob' });
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(content);
+        link.download = `${zipName}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch (error) {
+        console.error("Error creating ZIP file:", error);
+        // Maybe show an error in the UI
+    }
+}
+
 
 /**
  * Wraps an API action with loading and error handling.

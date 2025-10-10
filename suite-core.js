@@ -166,66 +166,11 @@ confirmCropBtn.addEventListener('click', () => {
 });
 cancelCropBtn.addEventListener('click', hideCropModal);
 
-// --- BATCH PROGRESS MODAL ---
-const batchProgressModal = document.getElementById('batch-progress-modal');
-const progressTitle = document.getElementById('progress-title');
-const progressText = document.getElementById('progress-text');
-const progressBar = document.getElementById('progress-bar');
-const successCountEl = document.getElementById('success-count');
-const failureCountEl = document.getElementById('failure-count');
-const errorListContainer = document.getElementById('error-list-container');
-const errorList = document.getElementById('error-list');
-const cancelGenerationBtn = document.getElementById('cancel-generation-btn');
-const closeProgressBtn = document.getElementById('close-progress-btn');
-
-function showBatchProgressModal() {
-    progressTitle.textContent = 'Generation Progress';
-    progressText.textContent = 'Initializing...';
-    progressBar.style.width = '0%';
-    successCountEl.textContent = '0';
-    failureCountEl.textContent = '0';
-    errorList.innerHTML = '';
-    errorListContainer.classList.add('hidden');
-    closeProgressBtn.classList.add('hidden');
-    cancelGenerationBtn.classList.remove('hidden');
-    cancelGenerationBtn.disabled = false;
-    batchProgressModal.style.display = 'flex';
-}
-
-function updateBatchProgress(current, total, successes, failures, error) {
-    progressText.textContent = `Generating image ${current} of ${total}...`;
-    progressBar.style.width = `${(current / total) * 100}%`;
-    successCountEl.textContent = successes;
-    failureCountEl.textContent = failures;
-    if(error) {
-        const li = document.createElement('li');
-        li.textContent = `Image ${current}: ${error}`;
-        errorList.appendChild(li);
-        errorListContainer.classList.remove('hidden');
-    }
-}
-
-function finishBatchProgress(cancelled = false) {
-    progressTitle.textContent = cancelled ? 'Generation Cancelled' : 'Generation Complete';
-    progressText.textContent = cancelled ? 'Stopped by user.' : 'Finished.';
-    cancelGenerationBtn.classList.add('hidden');
-    closeProgressBtn.classList.remove('hidden');
-}
-
-closeProgressBtn.addEventListener('click', () => {
-    batchProgressModal.style.display = 'none';
-});
-
-
 // --- INITIALIZE ALL MODULES ---
 const shared = { 
     showImagePreview, 
     showZipModal, 
-    showCropModal,
-    showBatchProgressModal,
-    updateBatchProgress,
-    finishBatchProgress,
-    cancelGenerationBtn
+    showCropModal
 };
 txt2img.initialize(shared);
 img2img.initialize(shared);

@@ -5,7 +5,7 @@
 
 // --- CONFIGURATION ---
 // The SUITE_VERSION is inherited from the script tag in index.html, but we define a fallback.
-const APP_VERSION = window.SUITE_VERSION || "19"; 
+const APP_VERSION = window.SUITE_VERSION || "20"; 
 const REPO = window.repo || "cmo84/ai-suite@release";
 
 function getAppHTML() {
@@ -77,6 +77,44 @@ function getAppHTML() {
                            <h2 class="text-xl font-bold">2. Image History & Refinement</h2>
                            <button id="download-zip-btn" class="tool-btn hidden">Download All</button>
                         </div>
+
+                        <!-- Preview Pane -->
+                        <div id="txt2img-preview-pane" class="mb-4 p-2 border border-gray-700 rounded-md hidden bg-black/20">
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div>
+                                    <img id="txt2img-preview-image" src="" class="w-full h-auto object-contain rounded-lg">
+                                </div>
+                                <div id="txt2img-preview-info" class="text-xs text-gray-300"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Generation Progress Section -->
+                        <div id="generation-progress-container" class="tool-card bg-gray-900/50 mb-6 hidden">
+                             <h2 id="progress-title" class="text-2xl font-bold mb-4 text-center">Generation Progress</h2>
+                             <p id="progress-text" class="text-center text-gray-300 mb-4">Initializing...</p>
+                             <div class="w-full bg-gray-700 rounded-full h-4 mb-4">
+                                 <div id="progress-bar" class="bg-blue-600 h-4 rounded-full transition-all duration-500" style="width: 0%"></div>
+                             </div>
+                             <div class="flex justify-around text-center mb-4">
+                                 <div>
+                                     <p class="text-lg font-bold text-green-400">Successful</p>
+                                     <p id="success-count" class="text-2xl font-bold">0</p>
+                                 </div>
+                                 <div>
+                                     <p class="text-lg font-bold text-red-400">Failed</p>
+                                     <p id="failure-count" class="text-2xl font-bold">0</p>
+                                 </div>
+                             </div>
+                             <div id="error-list-container" class="hidden">
+                                <p class="text-center text-gray-400 text-sm">Failure Details:</p>
+                                <ul id="error-list" class="mt-2 text-sm text-red-300 max-h-24 overflow-y-auto bg-gray-900/50 p-2 rounded-md"></ul>
+                            </div>
+                             <div class="text-center mt-6 flex justify-center gap-4">
+                                 <button id="cancel-generation-btn" class="tool-btn tool-btn-danger">Cancel</button>
+                                 <button id="close-progress-btn" class="aim-button hidden">Close</button>
+                             </div>
+                        </div>
+
                         <div id="gallery-container" class="gallery-container"></div>
                         <div id="image-loader" class="loader hidden mx-auto my-4"></div>
                         <p id="image-error" class="text-red-500 hidden text-center my-2"></p>
@@ -230,34 +268,6 @@ function getAppHTML() {
              <div class="flex gap-4 mt-4">
                  <button id="cancel-crop-btn" class="aim-button flex-1">Cancel</button>
                  <button id="confirm-crop-btn" class="tool-btn flex-1">Crop & Use</button>
-             </div>
-        </div>
-    </div>
-
-     <div id="batch-progress-modal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
-        <div class="tool-card bg-gray-800 w-full max-w-lg">
-             <h2 id="progress-title" class="text-2xl font-bold text-white mb-4 text-center">Generation Progress</h2>
-             <p id="progress-text" class="text-center text-gray-300 mb-4">Initializing...</p>
-             <div class="w-full bg-gray-700 rounded-full h-4 mb-4">
-                 <div id="progress-bar" class="bg-blue-600 h-4 rounded-full transition-all duration-500" style="width: 0%"></div>
-             </div>
-             <div class="flex justify-around text-center mb-4">
-                 <div>
-                     <p class="text-lg font-bold text-green-400">Successful</p>
-                     <p id="success-count" class="text-2xl font-bold text-white">0</p>
-                 </div>
-                 <div>
-                     <p class="text-lg font-bold text-red-400">Failed</p>
-                     <p id="failure-count" class="text-2xl font-bold text-white">0</p>
-                 </div>
-             </div>
-             <div id="error-list-container" class="hidden">
-                <p class="text-center text-gray-400 text-sm">Failure Details:</p>
-                <ul id="error-list" class="mt-2 text-sm text-red-300 max-h-24 overflow-y-auto bg-gray-900/50 p-2 rounded-md"></ul>
-            </div>
-             <div class="text-center mt-6 flex justify-center gap-4">
-                 <button id="cancel-generation-btn" class="tool-btn tool-btn-danger">Cancel</button>
-                 <button id="close-progress-btn" class="aim-button hidden">Close</button>
              </div>
         </div>
     </div>
