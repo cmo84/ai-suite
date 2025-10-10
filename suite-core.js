@@ -12,8 +12,8 @@ import * as aim from 'aim';
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- INITIALIZATION ---
-    if (typeof SUITE_API_KEY !== 'undefined') {
-        initializeApi(SUITE_API_KEY);
+    if (typeof window.SUITE_API_KEY !== 'undefined') {
+        initializeApi(window.SUITE_API_KEY);
     } else {
         console.error("API Key not found.");
     }
@@ -234,4 +234,3 @@ document.addEventListener('DOMContentLoaded', () => {
     sketchpad.initialize(shared);
     aim.initialize(shared);
 });
-
