@@ -1,0 +1,38 @@
+# This workflow prepares the JavaScript and CSS modules for distribution via jsDelivr.
+name: Build and Deploy to Release Branch
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Read version from version.txt
+        id: version
+        run: echo "VERSION=$(cat version.txt)" >> $GITHUB_ENV
+
+      - name: Create versioned directory
+        run: mkdir -p dist/${{ env.VERSION }}
+
+      - name: Copy JS and CSS files to versioned directory
+        run: |
+          cp *.js dist/${{ env.VERSION }}/
+          cp *.css dist/${{ env.VERSION }}/
+          echo "Copied assets to dist/${{ env.VERSION }}/"
+
+      - name: Commit 'dist' folder to 'release' branch
+        uses: s0/git-publish-subdir-action@develop
+        env:
+          REPO: self
+          BRANCH: release
+          FOLDER: dist
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MESSAGE: "Build: ({sha}) {msg}"
+
