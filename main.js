@@ -5,7 +5,7 @@
 
 // --- CONFIGURATION ---
 // The SUITE_VERSION is inherited from the script tag in index.html, but we define a fallback.
-const APP_VERSION = window.SUITE_VERSION || "14"; 
+const APP_VERSION = window.SUITE_VERSION || "17"; 
 const REPO = window.repo || "cmo84/ai-suite@release";
 
 function getAppHTML() {
@@ -268,7 +268,7 @@ function loadAssets() {
     // Inject Stylesheet
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = `https://cdn.jsdelivr.net/gh/${REPO}/dist/${APP_VERSION}/index.css`;
+    link.href = `https://cdn.jsdelivr.net/gh/${REPO}/${APP_VERSION}/index.css`;
     document.head.appendChild(link);
 
     // Inject Import Map
@@ -276,14 +276,14 @@ function loadAssets() {
     importMap.type = 'importmap';
     importMap.textContent = JSON.stringify({
         imports: {
-            "db": `https://cdn.jsdelivr.net/gh/${REPO}/dist/${APP_VERSION}/database.js`,
-            "api": `https://cdn.jsdelivr.net/gh/${REPO}/dist/${APP_VERSION}/api-handler.js`,
-            "utils": `https://cdn.jsdelivr.net/gh/${REPO}/dist/${APP_VERSION}/utils.js`,
-            "txt2img": `https://cdn.jsdelivr.net/gh/${REPO}/dist/${APP_VERSION}/module-txt2img.js`,
-            "img2img": `https://cdn.jsdelivr.net/gh/${REPO}/dist/${APP_VERSION}/module-img2img.js`,
-            "composer": `https://cdn.jsdelivr.net/gh/${REPO}/dist/${APP_VERSION}/module-composer.js`,
-            "sketchpad": `https://cdn.jsdelivr.net/gh/${REPO}/dist/${APP_VERSION}/module-sketchpad.js`,
-            "aim": `https://cdn.jsdelivr.net/gh/${REPO}/dist/${APP_VERSION}/module-aim.js`
+            "db": `https://cdn.jsdelivr.net/gh/${REPO}/${APP_VERSION}/database.js`,
+            "api": `https://cdn.jsdelivr.net/gh/${REPO}/${APP_VERSION}/api-handler.js`,
+            "utils": `https://cdn.jsdelivr.net/gh/${REPO}/${APP_VERSION}/utils.js`,
+            "txt2img": `https://cdn.jsdelivr.net/gh/${REPO}/${APP_VERSION}/module-txt2img.js`,
+            "img2img": `https://cdn.jsdelivr.net/gh/${REPO}/${APP_VERSION}/module-img2img.js`,
+            "composer": `https://cdn.jsdelivr.net/gh/${REPO}/${APP_VERSION}/module-composer.js`,
+            "sketchpad": `https://cdn.jsdelivr.net/gh/${REPO}/${APP_VERSION}/module-sketchpad.js`,
+            "aim": `https://cdn.jsdelivr.net/gh/${REPO}/${APP_VERSION}/module-aim.js`
         }
     });
     document.head.appendChild(importMap);
@@ -291,7 +291,7 @@ function loadAssets() {
     // Inject and execute the core application logic
     const coreScript = document.createElement('script');
     coreScript.type = 'module';
-    coreScript.src = `https://cdn.jsdelivr.net/gh/${REPO}/dist/${APP_VERSION}/suite-core.js`;
+    coreScript.src = `https://cdn.jsdelivr.net/gh/${REPO}/${APP_VERSION}/suite-core.js`;
     document.head.appendChild(coreScript);
 }
 
