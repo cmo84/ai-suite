@@ -21,6 +21,12 @@ const ttsVoices = {
     "Vindemiatrix": "Gentle", "Sadachbia": "Lively", "Sadaltager": "Knowledgeable", "Sulafat": "Warm"
 };
 
+const availableModels = [
+    "gemini-2.0-flash",
+    "gemini-2.5-flash-preview-05-20",
+    "gemini-pro"
+];
+
 export async function initialize(sharedUtils) {
     shared = sharedUtils;
     // --- DOM Elements ---
@@ -63,7 +69,8 @@ export async function initialize(sharedUtils) {
                 fontSettings: { family: 'Helvetica', size: '12px' },
                 ttsEnabled: false,
                 ttsVoice: 'Sulafat',
-                proactive: { enabled: false, baseInterval: 60000, currentInterval: 60000, nextMessageTimestamp: Date.now() + 60000, awaitingReply: false, isTriggering: false }
+                proactive: { enabled: false, baseInterval: 60000, currentInterval: 60000, nextMessageTimestamp: Date.now() + 60000, awaitingReply: false, isTriggering: false },
+                model: availableModels[0]
             };
             buddies[screenName] = newBuddy;
             await db.saveBuddy(newBuddy);
@@ -170,6 +177,7 @@ export async function initialize(sharedUtils) {
                     <select class="proactive-frequency"></select>
                     <label class="tts-control"><input type="checkbox" class="tts-toggle"> TTS</label>
                     <select class="tts-voice-select"></select>
+                    <select class="model-select"></select>
                 </div>
                 <div class="messages"></div>
                 <div class="input-area p-2">
@@ -193,12 +201,14 @@ export async function initialize(sharedUtils) {
         const proactiveFrequency = chatWindow.querySelector('.proactive-frequency');
         const ttsToggle = chatWindow.querySelector('.tts-toggle');
         const ttsVoiceSelect = chatWindow.querySelector('.tts-voice-select');
+        const modelSelect = chatWindow.querySelector('.model-select');
 
         // Populate controls
         ['Helvetica', 'Arial', 'Times New Roman', 'Courier New', 'Verdana'].forEach(f => fontFaceSelect.add(new Option(f,f)));
         ['10px', '12px', '14px', '16px'].forEach(s => fontSizeSelect.add(new Option(s.replace('px',''),s)));
         Object.entries({15000: 'ASAP', 30000: 'Often', 60000: 'Normal', 180000: 'Slow'}).forEach(([val, txt]) => proactiveFrequency.add(new Option(txt,val)));
         for (const voice in ttsVoices) ttsVoiceSelect.add(new Option(`${voice} (${ttsVoices[voice]})`, voice));
+        availableModels.forEach(m => modelSelect.add(new Option(m, m)));
         
         // Load settings and attach listeners
         const applyFontSettings = (family, size) => {
@@ -220,12 +230,14 @@ export async function initialize(sharedUtils) {
         };
         ttsToggle.onchange = () => { buddyData.ttsEnabled = ttsToggle.checked; db.saveBuddy(buddyData); };
         ttsVoiceSelect.onchange = () => { buddyData.ttsVoice = ttsVoiceSelect.value; db.saveBuddy(buddyData); };
+        modelSelect.onchange = () => { buddyData.model = modelSelect.value; db.saveBuddy(buddyData); };
 
         applyFontSettings(buddyData.fontSettings.family, buddyData.fontSettings.size);
         proactiveToggle.checked = buddyData.proactive.enabled;
         proactiveFrequency.value = buddyData.proactive.baseInterval;
         ttsToggle.checked = buddyData.ttsEnabled;
         ttsVoiceSelect.value = buddyData.ttsVoice;
+        modelSelect.value = buddyData.model;
         
         // Load history and wire up chat
         (conversations[screenName] || []).forEach(msg => displayMessage(messagesContainer, msg.sender, msg.text, msg.isImage, screenName));
@@ -244,6 +256,7 @@ export async function initialize(sharedUtils) {
         const messagesContainer = chatWindow.querySelector('.messages');
         const loader = chatWindow.querySelector('.loader');
         const sendBtn = chatWindow.querySelector('.send-btn');
+        const model = buddies[screenName].model;
         
         addMessageToHistory(screenName, 'You', messageText);
         displayMessage(messagesContainer, 'You', messageText);
@@ -261,7 +274,7 @@ export async function initialize(sharedUtils) {
                 addMessageToHistory(screenName, screenName, response, true);
             } else {
                 const payload = await buildTextPayload(screenName);
-                const response = await api.callTextApi(payload);
+                const response = await api.callTextApi(payload, model);
                 const msgEl = displayMessage(messagesContainer, screenName, response, false, screenName);
                 addMessageToHistory(screenName, screenName, response);
                 if (buddies[screenName].ttsEnabled) {
@@ -319,9 +332,10 @@ export async function initialize(sharedUtils) {
          const history = (conversations[screenName] || []).filter(m => !m.isImage).slice(-6).map(m => `${m.sender}: ${m.text}`).join('\n');
          const personality = buddies[screenName].personality;
          const userProfile = await db.loadAppState('userProfile') || 'a user';
+         const model = buddies[screenName].model;
          const system = `You are an AI creating a concise, visually descriptive prompt for an image generator. Synthesize the user's profile, character's personality, conversation, and user's request into one creative sentence. Output only the prompt.`;
          const query = `User Profile: "${userProfile}".\nCharacter Personality: "${personality}"\nConversation:\n${history}\nUser Request: "${userPrompt}"`;
-         return await api.callTextApi({ contents: [{ parts: [{ text: query }] }], systemInstruction: { parts: [{ text: system }] } });
+         return await api.callTextApi({ contents: [{ parts: [{ text: query }] }], systemInstruction: { parts: [{ text: system }] } }, model);
     }
     
     async function buildTextPayload(screenName) {
@@ -333,7 +347,7 @@ export async function initialize(sharedUtils) {
     }
 
     async function callProactiveTextApi(screenName) {
-        const { personality } = buddies[screenName];
+        const { personality, model } = buddies[screenName];
         const userProfile = await db.loadAppState('userProfile') || 'a user';
         const history = (conversations[screenName] || []).map(m => ({ role: m.sender === 'You' ? 'user' : 'model', parts: [{ text: m.isImage ? `[I sent an image]` : m.text }] }));
         let system;
@@ -342,7 +356,7 @@ export async function initialize(sharedUtils) {
         } else {
              system = `You are a chatbot with personality: "${personality}". You are talking to a user with profile: "${userProfile}". Review the chat history, then send a new, proactive message to re-engage them. Start a new, natural thought. Be concise and include text, not just an emoji.`;
         }
-        return await api.callTextApi({ contents: history, systemInstruction: { parts: [{ text: system }] } });
+        return await api.callTextApi({ contents: history, systemInstruction: { parts: [{ text: system }] } }, model);
     }
 
     async function triggerProactiveMessage(screenName) {
@@ -410,3 +424,4 @@ export async function initialize(sharedUtils) {
     await loadState();
     proactiveIntervalCheck = setInterval(proactiveEngine, 5000);
 }
+
