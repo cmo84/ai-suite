@@ -55,6 +55,12 @@ async function initializeApp() {
         // 2. Inject the fetched HTML into the document body.
         document.body.innerHTML = html;
 
+        // --- SET VERSION IN TITLE BAR ---
+        const versionEl = document.getElementById('suite-version');
+        if (versionEl && window.SUITE_VERSION) {
+            versionEl.textContent = `v${window.SUITE_VERSION}`;
+        }
+
         // 3. Load all versioned CSS and JS module assets.
         await loadAssets();
 
