@@ -270,10 +270,17 @@ function getAppHTML() {
 }
 
 async function initializeApp() {
+    const assetPath = window.assetPath;
+    const cacheBust = window.cacheBust || '';
+    if (!assetPath) {
+        console.error("Asset path is not defined.");
+        return;
+    }
+
     // Inject CSS
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = `${window.assetPath}index.css${window.cacheBust}`;
+    link.href = `${assetPath}index.css${cacheBust}`;
     document.head.appendChild(link);
 
     // Inject HTML
@@ -282,14 +289,14 @@ async function initializeApp() {
     // Create and inject the import map
     const importMap = {
         imports: {
-            "db": `${window.assetPath}database.js${window.cacheBust}`,
-            "api": `${window.assetPath}api-handler.js${window.cacheBust}`,
-            "utils": `${window.assetPath}utils.js${window.cacheBust}`,
-            "txt2img": `${window.assetPath}module-txt2img.js${window.cacheBust}`,
-            "img2img": `${window.assetPath}module-img2img.js${window.cacheBust}`,
-            "composer": `${window.assetPath}module-composer.js${window.cacheBust}`,
-            "sketchpad": `${window.assetPath}module-sketchpad.js${window.cacheBust}`,
-            "aim": `${window.assetPath}module-aim.js${window.cacheBust}`
+            "db": `${assetPath}database.js${cacheBust}`,
+            "api": `${assetPath}api-handler.js${cacheBust}`,
+            "utils": `${assetPath}utils.js${cacheBust}`,
+            "txt2img": `${assetPath}module-txt2img.js${cacheBust}`,
+            "img2img": `${assetPath}module-img2img.js${cacheBust}`,
+            "composer": `${assetPath}module-composer.js${cacheBust}`,
+            "sketchpad": `${assetPath}module-sketchpad.js${cacheBust}`,
+            "aim": `${assetPath}module-aim.js${cacheBust}`
         }
     };
     const im = document.createElement('script');
@@ -298,7 +305,7 @@ async function initializeApp() {
     document.head.appendChild(im);
 
     // Dynamically import and initialize the core application logic
-    await import(`${window.assetPath}suite-core.js${window.cacheBust}`);
+    await import(`${assetPath}suite-core.js${cacheBust}`);
 }
 
 initializeApp();
