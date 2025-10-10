@@ -9,7 +9,7 @@ function getAppHTML() {
     <div id="suite-window" class="window">
          <div class="title-bar">
             <div class="title-bar-text">
-                <span>AI Creative Suite</span>
+                <span>AI Creative Suite <span id="suite-version" class="font-normal opacity-75 ml-2"></span></span>
             </div>
             <div class="title-bar-buttons">
                 <div id="toggle-maximize-btn" class="title-bar-button">1</div>
@@ -269,52 +269,37 @@ function getAppHTML() {
     `;
 }
 
-async function loadAssets() {
-    const assetPath = window.assetPath;
-    const cacheBust = window.cacheBust || '';
-    if (!assetPath) {
-        console.error("Asset path is not defined. Check the loader script in index.html.");
-        return;
-    }
-
-    // Inject Stylesheet
+async function initializeApp() {
+    // Inject CSS
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = `${assetPath}index.css${cacheBust}`;
+    link.href = `${window.assetPath}index.css${window.cacheBust}`;
     document.head.appendChild(link);
 
-    // Inject Import Map first, ensuring module paths are defined before use.
-    const importMap = document.createElement('script');
-    importMap.type = 'importmap';
-    importMap.textContent = JSON.stringify({
-        imports: {
-            "suite-core.js": `${assetPath}suite-core.js${cacheBust}`,
-            "db": `${assetPath}database.js${cacheBust}`,
-            "api": `${assetPath}api-handler.js${cacheBust}`,
-            "utils": `${assetPath}utils.js${cacheBust}`,
-            "txt2img": `${assetPath}module-txt2img.js${cacheBust}`,
-            "img2img": `${assetPath}module-img2img.js${cacheBust}`,
-            "composer": `${assetPath}module-composer.js${cacheBust}`,
-            "sketchpad": `${assetPath}module-sketchpad.js${cacheBust}`,
-            "aim": `${assetPath}module-aim.js${cacheBust}`
-        }
-    });
-    document.head.appendChild(importMap);
-
-    // Dynamically import the core application logic. This forces the browser
-    // to wait for the importmap to be processed before resolving 'suite-core.js'.
-    await import('suite-core.js');
-}
-
-async function initializeApp() {
-    // 1. Inject the main HTML structure into the document body.
+    // Inject HTML
     document.body.innerHTML = getAppHTML();
     
-    // 2. Load all versioned CSS and JS module assets from the CDN.
-    await loadAssets();
+    // Create and inject the import map
+    const importMap = {
+        imports: {
+            "db": `${window.assetPath}database.js${window.cacheBust}`,
+            "api": `${window.assetPath}api-handler.js${window.cacheBust}`,
+            "utils": `${window.assetPath}utils.js${window.cacheBust}`,
+            "txt2img": `${window.assetPath}module-txt2img.js${window.cacheBust}`,
+            "img2img": `${window.assetPath}module-img2img.js${window.cacheBust}`,
+            "composer": `${window.assetPath}module-composer.js${window.cacheBust}`,
+            "sketchpad": `${window.assetPath}module-sketchpad.js${window.cacheBust}`,
+            "aim": `${window.assetPath}module-aim.js${window.cacheBust}`
+        }
+    };
+    const im = document.createElement('script');
+    im.type = 'importmap';
+    im.textContent = JSON.stringify(importMap);
+    document.head.appendChild(im);
+
+    // Dynamically import and initialize the core application logic
+    await import(`${window.assetPath}suite-core.js${window.cacheBust}`);
 }
 
-// --- Start the application ---
 initializeApp();
-
 

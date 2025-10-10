@@ -38,6 +38,14 @@ async function initializeCore() {
     const suiteWindow = document.getElementById('suite-window');
     makeDraggable(suiteWindow);
 
+    // --- SET VERSION IN TITLE BAR ---
+    if (window.SUITE_VERSION) {
+        const versionEl = document.getElementById('suite-version');
+        if (versionEl) {
+            versionEl.textContent = `v${window.SUITE_VERSION}`;
+        }
+    }
+
     // --- MAIN WINDOW MANAGEMENT ---
     const toggleMaximizeBtn = document.getElementById('toggle-maximize-btn');
     toggleMaximizeBtn.addEventListener('click', () => {
