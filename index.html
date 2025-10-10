@@ -17,18 +17,22 @@
         window.SUITE_API_KEY = apiKey; // Make the key globally accessible
         
         // --- Development & Versioning Control ---
-        const USE_LATEST_BUILD = true; // Set to true for latest commit, false for specific version.
-        const SUITE_VERSION = "35";    // The specific version to use when USE_LATEST_BUILD is false.
+        const USE_LATEST_BUILD = false; // Set to true for latest commit, false for specific version.
+        const SUITE_VERSION = "36";    // The specific version to use when USE_LATEST_BUILD is false.
         window.SUITE_VERSION = SUITE_VERSION; // Make version globally accessible
-        const repo = "cmo84/ai-suite@release";
         
+        const repoBase = "cmo84/ai-suite";
+        const repo = USE_LATEST_BUILD ? `${repoBase}@release` : `${repoBase}@${SUITE_VERSION}`;
+
         // --- Cache Busting Logic ---
-        const cacheBust = USE_LATEST_BUILD ? `?v=${Date.now()}` : '';
+        const cacheBust = `?v=${USE_LATEST_BUILD ? Date.now() : SUITE_VERSION}`;
         window.cacheBust = cacheBust; // Make available to main.js
 
+        // For this tagging strategy to work, the files must be at the root of the tag.
+        // The /latest/ path is only used for the release branch.
         const assetPath = USE_LATEST_BUILD 
             ? `https://cdn.jsdelivr.net/gh/${repo}/latest/` 
-            : `https://cdn.jsdelivr.net/gh/${repo}/${SUITE_VERSION}/`;
+            : `https://cdn.jsdelivr.net/gh/${repo}/`;
         window.assetPath = assetPath;
         
         // Dynamically load the main bootstrap script with cache buster if needed
