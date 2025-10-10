@@ -24,7 +24,6 @@ export async function callTextApi(payload) {
     const modelName = "gemini-2.5-flash-preview-05-20";
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
     
-    // Ensure safety settings are included
     const finalPayload = { ...payload, safetySettings };
 
     const response = await fetch(apiUrl, {
@@ -79,6 +78,49 @@ export async function callImageApi(payload) {
              reason = `Generation stopped. Reason: ${result.candidates[0].finishReason}`;
         }
         throw new Error(reason);
+    }
+}
+
+/**
+ * Calls the Gemini TTS model.
+ * @param {string} text - The text to synthesize.
+ * @param {string} voiceName - The name of the voice to use.
+ * @returns {Promise<{audioBase64: string, sampleRate: number}>}
+ */
+export async function callTtsApi(text, voiceName = 'Sulafat') {
+    const payload = {
+        contents: [{ parts: [{ text }] }],
+        generationConfig: {
+            responseModalities: ["AUDIO"],
+            speechConfig: {
+                voiceConfig: {
+                    prebuiltVoiceConfig: { voiceName: voiceName }
+                }
+            }
+        },
+        model: "gemini-2.5-flash-preview-tts"
+    };
+
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+
+    const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) throw new Error(`TTS API Error: ${response.status} ${response.statusText}`);
+    const result = await response.json();
+    
+    const audioData = result?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    const mimeType = result?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.mimeType;
+
+    if (audioData && mimeType && mimeType.startsWith("audio/")) {
+        const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+        const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 24000;
+        return { audioBase64: audioData, sampleRate };
+    } else {
+        throw new Error("No audio data found in TTS API response.");
     }
 }
 

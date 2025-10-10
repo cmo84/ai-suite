@@ -22,7 +22,7 @@ export async function initialize(sharedUtils) {
     const loader = document.getElementById('sketch-loader');
     const errorEl = document.getElementById('sketch-error');
     
-    if(!sketchpad) return; // In case the element doesn't exist
+    if(!sketchpad) return;
     const ctx = sketchpad.getContext('2d');
     let isDrawing = false;
     let lastX = 0;
@@ -109,7 +109,7 @@ export async function initialize(sharedUtils) {
             generationConfig: { responseModalities: ['IMAGE'] }
         };
         const base64 = await api.callImageApi(payload);
-        const newImage = resultManager.addImage({ base64, prompt, generationType: 'sketch', parentId: null, filename: `${Date.now()}_sketch.png` });
+        const newImage = resultManager.addImage({ base64, prompt, generationType: 'sketch', parentId: null });
         await db.saveImage('sketch', newImage);
     }));
 

@@ -6,6 +6,7 @@
     <title>Master Creative AI Suite</title>
     <!-- External Libraries -->
     <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -67,7 +68,11 @@
                     <div class="tool-card">
                         <h2 class="text-xl font-bold mb-2">1. Create Image</h2>
                          <textarea id="prompt-text" class="tool-input" placeholder="e.g., A photorealistic portrait of a knight..."></textarea>
-                         <div class="flex gap-2 mt-2 flex-wrap">
+                         <div class="mt-4">
+                            <label for="image-count" class="block text-sm font-medium text-gray-400 mb-1 text-center">Number of Images:</label>
+                            <input type="number" id="image-count" value="1" min="1" max="8" class="tool-input w-28 mx-auto block p-2 text-sm text-center">
+                        </div>
+                         <div class="flex gap-2 mt-4 flex-wrap justify-center">
                              <button id="get-ideas-btn" class="tool-btn tool-btn-secondary">✨ Get Ideas</button>
                              <button id="expand-prompt-btn" class="tool-btn tool-btn-secondary">Expand</button>
                              <button id="generate-btn" class="tool-btn">Generate</button>
@@ -207,6 +212,10 @@
         <button id="modal-close-btn" class="absolute top-4 right-4 text-white text-4xl font-bold">&times;</button>
         <p id="modal-prompt" class="text-white text-center mb-4 p-2 bg-black/50 rounded-md"></p>
         <img id="modal-image" src="" class="max-w-full max-h-[80vh] object-contain">
+        <div id="modal-vqa-container" class="mt-4 text-center">
+            <button id="modal-describe-btn" class="tool-btn tool-btn-secondary">✨ Describe Image</button>
+            <div id="modal-description" class="mt-2 text-gray-300 bg-black/50 p-3 rounded-md hidden max-w-2xl"></div>
+        </div>
     </div>
 
     <div id="zip-filename-modal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
@@ -227,6 +236,34 @@
              <div class="flex gap-4 mt-4">
                  <button id="cancel-crop-btn" class="aim-button flex-1">Cancel</button>
                  <button id="confirm-crop-btn" class="tool-btn flex-1">Crop & Use</button>
+             </div>
+        </div>
+    </div>
+
+     <div id="batch-progress-modal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
+        <div class="tool-card bg-gray-800 w-full max-w-lg">
+             <h2 id="progress-title" class="text-2xl font-bold text-white mb-4 text-center">Generation Progress</h2>
+             <p id="progress-text" class="text-center text-gray-300 mb-4">Initializing...</p>
+             <div class="w-full bg-gray-700 rounded-full h-4 mb-4">
+                 <div id="progress-bar" class="bg-blue-600 h-4 rounded-full transition-all duration-500" style="width: 0%"></div>
+             </div>
+             <div class="flex justify-around text-center mb-4">
+                 <div>
+                     <p class="text-lg font-bold text-green-400">Successful</p>
+                     <p id="success-count" class="text-2xl font-bold text-white">0</p>
+                 </div>
+                 <div>
+                     <p class="text-lg font-bold text-red-400">Failed</p>
+                     <p id="failure-count" class="text-2xl font-bold text-white">0</p>
+                 </div>
+             </div>
+             <div id="error-list-container" class="hidden">
+                <p class="text-center text-gray-400 text-sm">Failure Details:</p>
+                <ul id="error-list" class="mt-2 text-sm text-red-300 max-h-24 overflow-y-auto bg-gray-900/50 p-2 rounded-md"></ul>
+            </div>
+             <div class="text-center mt-6 flex justify-center gap-4">
+                 <button id="cancel-generation-btn" class="tool-btn tool-btn-danger">Cancel</button>
+                 <button id="close-progress-btn" class="aim-button hidden">Close</button>
              </div>
         </div>
     </div>

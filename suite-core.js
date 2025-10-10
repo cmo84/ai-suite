@@ -12,12 +12,10 @@ import * as aim from 'aim';
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- INITIALIZATION ---
-    
-    // Pass the globally scoped API key to the API handler module.
     if (typeof SUITE_API_KEY !== 'undefined') {
         initializeApi(SUITE_API_KEY);
     } else {
-        console.error("API Key not found. The application will not be able to connect to Google APIs.");
+        console.error("API Key not found.");
     }
     
     const suiteWindow = document.getElementById('suite-window');
@@ -25,11 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- MAIN WINDOW MANAGEMENT ---
     const toggleMaximizeBtn = document.getElementById('toggle-maximize-btn');
-    let isMaximized = false;
     toggleMaximizeBtn.addEventListener('click', () => {
         suiteWindow.classList.toggle('maximized');
-        isMaximized = !isMaximized;
-        // This might be needed to force canvases to redraw after resize
         window.dispatchEvent(new Event('resize'));
     });
 
@@ -39,14 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
             const targetTab = tab.dataset.tab;
-            
-            tabContents.forEach(content => {
-                content.classList.remove('active');
-            });
-            
+            tabContents.forEach(content => content.classList.remove('active'));
             document.getElementById(`${targetTab}-tab`).classList.add('active');
-            
-            // Re-trigger resize to fix any canvas issues on hidden tabs
             window.dispatchEvent(new Event('resize'));
         });
     });
@@ -56,10 +45,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalImage = document.getElementById('modal-image');
     const modalCloseBtn = document.getElementById('modal-close-btn');
     const modalPrompt = document.getElementById('modal-prompt');
-    
+    const modalDescribeBtn = document.getElementById('modal-describe-btn');
+    const modalDescription = document.getElementById('modal-description');
+    let currentImageForVQA = null;
+
     function showImagePreview(image) {
+        currentImageForVQA = image;
         modalImage.src = `data:image/png;base64,${image.base64}`;
         modalPrompt.textContent = image.prompt || 'No prompt available.';
+        modalDescription.classList.add('hidden');
+        modalDescription.textContent = '';
         imagePreviewModal.style.display = 'flex';
     }
     
@@ -67,12 +62,32 @@ document.addEventListener('DOMContentLoaded', () => {
         imagePreviewModal.style.display = 'none';
         modalImage.src = '';
         modalPrompt.textContent = '';
+        currentImageForVQA = null;
     }
 
     modalCloseBtn.addEventListener('click', hideImagePreview);
     imagePreviewModal.addEventListener('click', (e) => {
-        if (e.target === imagePreviewModal) {
-            hideImagePreview();
+        if (e.target === imagePreviewModal) hideImagePreview();
+    });
+    modalDescribeBtn.addEventListener('click', async () => {
+        if (!currentImageForVQA) return;
+        modalDescription.textContent = 'Describing...';
+        modalDescription.classList.remove('hidden');
+        
+        try {
+            const { callTextApi } = await import('api');
+            const payload = {
+                contents: [{
+                    parts: [
+                        { text: "Describe this image in a vivid and detailed paragraph. Focus on the mood, atmosphere, and key visual elements." },
+                        { inlineData: { mimeType: "image/png", data: currentImageForVQA.base64 } }
+                    ]
+                }],
+            };
+            const description = await callTextApi(payload);
+            modalDescription.innerHTML = description.replace(/\n/g, '<br>');
+        } catch(e) {
+            modalDescription.textContent = `Error: ${e.message}`;
         }
     });
 
@@ -96,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function hideZipModal() {
         zipFilenameModal.style.display = 'none';
         if (zipPromiseResolve) {
-            zipPromiseResolve(null); // Resolve with null if cancelled
+            zipPromiseResolve(null);
             zipPromiseResolve = null;
         }
     }
@@ -126,9 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if(cropperInstance) cropperInstance.destroy();
             cropperInstance = new Cropper(cropImageTarget, {
-                aspectRatio: 1,
-                viewMode: 1,
-                background: false,
+                aspectRatio: 1, viewMode: 1, background: false,
             });
         });
     }
@@ -153,10 +166,68 @@ document.addEventListener('DOMContentLoaded', () => {
         hideCropModal();
     });
     cancelCropBtn.addEventListener('click', hideCropModal);
+    
+    // --- BATCH PROGRESS MODAL ---
+    const batchProgressModal = document.getElementById('batch-progress-modal');
+    const progressTitle = document.getElementById('progress-title');
+    const progressText = document.getElementById('progress-text');
+    const progressBar = document.getElementById('progress-bar');
+    const successCountEl = document.getElementById('success-count');
+    const failureCountEl = document.getElementById('failure-count');
+    const errorListContainer = document.getElementById('error-list-container');
+    const errorList = document.getElementById('error-list');
+    const cancelGenerationBtn = document.getElementById('cancel-generation-btn');
+    const closeProgressBtn = document.getElementById('close-progress-btn');
+    
+    function showBatchProgressModal() {
+        progressTitle.textContent = 'Generation Progress';
+        progressText.textContent = 'Initializing...';
+        progressBar.style.width = '0%';
+        successCountEl.textContent = '0';
+        failureCountEl.textContent = '0';
+        errorList.innerHTML = '';
+        errorListContainer.classList.add('hidden');
+        closeProgressBtn.classList.add('hidden');
+        cancelGenerationBtn.classList.remove('hidden');
+        cancelGenerationBtn.disabled = false;
+        batchProgressModal.style.display = 'flex';
+    }
+    
+    function updateBatchProgress(current, total, successes, failures, error) {
+        progressText.textContent = `Generating image ${current} of ${total}...`;
+        progressBar.style.width = `${(current / total) * 100}%`;
+        successCountEl.textContent = successes;
+        failureCountEl.textContent = failures;
+        if(error) {
+            const li = document.createElement('li');
+            li.textContent = `Image ${current}: ${error}`;
+            errorList.appendChild(li);
+            errorListContainer.classList.remove('hidden');
+        }
+    }
+    
+    function finishBatchProgress(cancelled = false) {
+        progressTitle.textContent = cancelled ? 'Generation Cancelled' : 'Generation Complete';
+        progressText.textContent = cancelled ? 'Stopped by user.' : 'Finished.';
+        cancelGenerationBtn.classList.add('hidden');
+        closeProgressBtn.classList.remove('hidden');
+    }
+    
+    closeProgressBtn.addEventListener('click', () => {
+        batchProgressModal.style.display = 'none';
+    });
 
 
     // --- INITIALIZE ALL MODULES ---
-    const shared = { showImagePreview, showZipModal, showCropModal };
+    const shared = { 
+        showImagePreview, 
+        showZipModal, 
+        showCropModal,
+        showBatchProgressModal,
+        updateBatchProgress,
+        finishBatchProgress,
+        cancelGenerationBtn
+    };
     txt2img.initialize(shared);
     img2img.initialize(shared);
     composer.initialize(shared);

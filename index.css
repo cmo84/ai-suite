@@ -1,3 +1,4 @@
+/* [ALL CSS FROM THE PREVIOUS <style> BLOCK IS NOW IN THIS FILE] */
 body { font-family: "MS Sans Serif", "Geneva", "sans-serif"; background-color: #004e98; color: #1f2937; }
 .window { background: #ece9d8; border: 1px solid #000; box-shadow: 1px 1px 0 #fff inset, 1px 1px 0 #000; position: absolute; display: flex; flex-direction: column; border-radius: 3px; resize: both; overflow: hidden; min-width: 220px; min-height: 300px; z-index: 20; }
 .title-bar { background: linear-gradient(90deg, #000080 0%, #1084d0 100%); color: #fff; padding: 3px 5px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; cursor: move; height: 18px; flex-shrink: 0; }

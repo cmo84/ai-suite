@@ -10,6 +10,14 @@
 export function createImageGallery(config) {
     let gallery = [];
     let selectedId = null;
+    let imageCounter = 0;
+
+    function getFilename(prompt, index) {
+        const sanitized = (prompt || 'untitled').replace(/[^a-zA-Z0-9 ]/g, '').toLowerCase();
+        const words = sanitized.split(' ').filter(Boolean);
+        const prefix = words.slice(0, 4).join('_') || 'image';
+        return `${String(index).padStart(2, '0')}_${prefix}.png`;
+    }
 
     async function render() {
         config.mainContainer.innerHTML = '';
@@ -39,7 +47,7 @@ export function createImageGallery(config) {
 
         if (container === config.mainContainer) {
             if (image.id === selectedId) img.classList.add('selected');
-            img.addEventListener('click', () => {
+            wrapper.addEventListener('click', () => {
                 selectedId = image.id;
                 if(config.onSelect) config.onSelect(image);
                 render();
@@ -109,9 +117,11 @@ export function createImageGallery(config) {
     
     return {
         addImage: (imageData) => {
+            imageCounter++;
             const newImage = { 
                 id: Date.now() + Math.random(), 
                 status: 'active',
+                filename: getFilename(imageData.prompt, imageCounter),
                 ...imageData 
             };
             gallery.push(newImage);
@@ -120,19 +130,32 @@ export function createImageGallery(config) {
         },
         getImages: () => gallery.filter(img => img.status === 'active'),
         getSelected: () => gallery.find(img => img.id === selectedId),
-        loadFromDB: (images) => { gallery = images || []; render(); },
+        loadFromDB: (images) => { 
+            gallery = images || []; 
+            imageCounter = gallery.length;
+            render(); 
+        },
+        updateAndSave: async (image) => {
+            const index = gallery.findIndex(i => i.id === image.id);
+            if (index !== -1) {
+                gallery[index] = image;
+            }
+            await render();
+            // This assumes a separate DB save call is made in the module
+        }
     };
 }
 
 /**
  * Wraps an API action with loading and error handling.
- * @param {HTMLElement} button - The button that triggered the action.
+ * @param {HTMLElement | HTMLElement[]} buttons - The button(s) that triggered the action.
  * @param {HTMLElement} loader - The loader element to show/hide.
  * @param {HTMLElement} errorEl - The error message element.
  * @param {Function} actionFn - The async function to execute.
  */
-export async function handleApiAction(button, loader, errorEl, actionFn) {
-    button.disabled = true;
+export async function handleApiAction(buttons, loader, errorEl, actionFn) {
+    const btnArray = Array.isArray(buttons) ? buttons : [buttons];
+    btnArray.forEach(btn => btn.disabled = true);
     loader.style.display = 'block';
     errorEl.style.display = 'none';
     try {
@@ -142,7 +165,7 @@ export async function handleApiAction(button, loader, errorEl, actionFn) {
         errorEl.textContent = `Error: ${error.message}`;
         errorEl.style.display = 'block';
     } finally {
-        button.disabled = false;
+        btnArray.forEach(btn => btn.disabled = false);
         loader.style.display = 'none';
     }
 }
@@ -172,15 +195,11 @@ export const pngMetadata = (() => {
     function crc32(bytes, start = 0, length = bytes.length - start) {
         const crcTable = new Uint32Array(256).map((_, i) => {
             let c = i;
-            for (let k = 0; k < 8; k++) {
-                c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
-            }
+            for (let k = 0; k < 8; k++) c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
             return c;
         });
         let crc = -1;
-        for (let i = start; i < start + length; i++) {
-            crc = (crc >>> 8) ^ crcTable[(crc ^ bytes[i]) & 0xff];
-        }
+        for (let i = start; i < start + length; i++) crc = (crc >>> 8) ^ crcTable[(crc ^ bytes[i]) & 0xff];
         return (crc ^ -1) >>> 0;
     }
 
@@ -190,24 +209,19 @@ export const pngMetadata = (() => {
         const chunkData = data;
         const chunkLength = new Uint8Array(4);
         new DataView(chunkLength.buffer).setUint32(0, chunkData.length, false);
-        
         const chunkAndData = new Uint8Array(4 + chunkData.length);
         chunkAndData.set(chunkType, 0);
         chunkAndData.set(chunkData, 4);
-        
         const crc = new Uint8Array(4);
         new DataView(crc.buffer).setUint32(0, crc32(chunkAndData), false);
-
-        const newChunk = new Uint8Array(chunkLength.length + chunkAndData.length + crc.length);
+        const newChunk = new Uint8Array(12 + chunkData.length);
         newChunk.set(chunkLength, 0);
         newChunk.set(chunkAndData, 4);
-        newChunk.set(crc, chunkLength.length + chunkAndData.length);
-
+        newChunk.set(crc, 8 + chunkData.length);
         const newPngBytes = new Uint8Array(pngBytes.length + newChunk.length);
         newPngBytes.set(pngBytes.slice(0, IEND_OFFSET), 0);
         newPngBytes.set(newChunk, IEND_OFFSET);
         newPngBytes.set(pngBytes.slice(IEND_OFFSET), IEND_OFFSET + newChunk.length);
-        
         return newPngBytes;
     }
 
@@ -235,7 +249,6 @@ export const pngMetadata = (() => {
             data.set(keywordBytes, 0);
             data.set(textBytes, keywordBytes.length);
             const newPngBytes = insertChunk(pngBytes, 'tEXt', data);
-            
             return arrayBufferToBase64(newPngBytes.buffer);
         },
         async decode(arrayBuffer) {
@@ -296,5 +309,51 @@ export function makeDraggable(element, onDragEnd = () => {}) {
     element.addEventListener('mouseup', () => {
         setTimeout(() => onDragEnd(element), 0);
     });
+}
+
+
+// --- TTS UTILITIES ---
+export function base64ToArrayBuffer(base64) {
+    const binaryString = window.atob(base64);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
+
+export function pcmToWav(pcmData, sampleRate) {
+    const pcm16 = new Int16Array(pcmData);
+    const wavHeader = new ArrayBuffer(44);
+    const view = new DataView(wavHeader);
+    const numChannels = 1;
+    const bitsPerSample = 16;
+    const blockAlign = (numChannels * bitsPerSample) / 8;
+    const byteRate = sampleRate * blockAlign;
+    const dataSize = pcm16.byteLength;
+
+    // RIFF chunk descriptor
+    view.setUint8(0, 'R'.charCodeAt(0)); view.setUint8(1, 'I'.charCodeAt(0));
+    view.setUint8(2, 'F'.charCodeAt(0)); view.setUint8(3, 'F'.charCodeAt(0));
+    view.setUint32(4, 36 + dataSize, true);
+    view.setUint8(8, 'W'.charCodeAt(0)); view.setUint8(9, 'A'.charCodeAt(0));
+    view.setUint8(10, 'V'.charCodeAt(0)); view.setUint8(11, 'E'.charCodeAt(0));
+    // "fmt " sub-chunk
+    view.setUint8(12, 'f'.charCodeAt(0)); view.setUint8(13, 'm'.charCodeAt(0));
+    view.setUint8(14, 't'.charCodeAt(0)); view.setUint8(15, ' '.charCodeAt(0));
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, byteRate, true);
+    view.setUint16(32, blockAlign, true);
+    view.setUint16(34, bitsPerSample, true);
+    // "data" sub-chunk
+    view.setUint8(36, 'd'.charCodeAt(0)); view.setUint8(37, 'a'.charCodeAt(0));
+    view.setUint8(38, 't'.charCodeAt(0)); view.setUint8(39, 'a'.charCodeAt(0));
+    view.setUint32(40, dataSize, true);
+
+    return new Blob([view, pcm16], { type: 'audio/wav' });
 }
 

@@ -71,7 +71,7 @@ export async function initialize(sharedUtils) {
         const prompt = promptInput.value.trim();
         const parts = [];
         if (prompt) {
-            parts.push({ text: `Create a new image based on these elements. Text prompt: ${prompt}` });
+            parts.push({ text: `Create a new image based on the following elements. Text prompt: ${prompt}` });
         } else {
             parts.push({ text: "Create a new image based on the following elements." });
         }
@@ -89,7 +89,7 @@ export async function initialize(sharedUtils) {
         if (!prompt && !hasImageInput) return;
         
         const base64 = await api.callImageApi({ contents: [{ parts }], generationConfig: { responseModalities: ['IMAGE'] } });
-        const newImage = resultManager.addImage({ base64, prompt, generationType: 'composition', parentId: null, filename: `${Date.now()}_comp.png` });
+        const newImage = resultManager.addImage({ base64, prompt, generationType: 'composition', parentId: null });
         await db.saveImage('composer', newImage);
     }));
 }
