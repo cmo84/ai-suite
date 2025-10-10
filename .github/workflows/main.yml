@@ -20,18 +20,21 @@ jobs:
         id: version
         run: echo "VERSION=$(cat version.txt)" >> $GITHUB_ENV
 
-      - name: Create versioned directory
-        run: mkdir -p dist/${{ env.VERSION }}
+      - name: Create versioned directory and root directory for latest build
+        run: |
+          mkdir -p dist/${{ env.VERSION }}
+          mkdir -p dist/latest
 
-      - name: Copy files to versioned directory
+      - name: Copy assets to versioned and root directories
         run: |
-          cp main.js *.css database.js api-handler.js utils.js suite-core.js module-*.js dist/${{ env.VERSION }}/
-          echo "Copied assets to dist/${{ env.VERSION }}/"
-          
-      - name: Copy files to root for latest build
-        run: |
-          cp main.js *.css database.js api-handler.js utils.js suite-core.js module-*.js dist/
-          echo "Copied assets to dist/ for latest build access."
+          # Copy all .js, .css, and the new app.html file
+          for file in *.js *.css app.html; do
+            if [ -f "$file" ]; then
+              cp "$file" "dist/${{ env.VERSION }}/"
+              cp "$file" "dist/latest/"
+            fi
+          done
+          echo "Copied assets to dist/${{ env.VERSION }}/ and dist/latest/"
 
       - name: Commit 'dist' folder to 'release' branch
         uses: s0/git-publish-subdir-action@develop
