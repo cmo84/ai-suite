@@ -25,7 +25,7 @@ function waitForElement(selector) {
 }
 
 async function initializeCore() {
-    await waitForElement('#suite-window');
+    await waitForElement('#main-header');
 
     // --- INITIALIZATION ---
     const { initializeApi } = await import('api');
@@ -34,20 +34,10 @@ async function initializeCore() {
     } else {
         console.error("API Key not found.");
     }
-    
-    const suiteWindow = document.getElementById('suite-window');
-    makeDraggable(suiteWindow);
-
-    // --- MAIN WINDOW MANAGEMENT ---
-    const toggleMaximizeBtn = document.getElementById('toggle-maximize-btn');
-    toggleMaximizeBtn.addEventListener('click', () => {
-        suiteWindow.classList.toggle('maximized');
-        window.dispatchEvent(new Event('resize'));
-    });
 
     // --- TAB SWITCHING ---
-    const tabs = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
+    const tabs = document.querySelectorAll('#main-tabs .tab-btn');
+    const tabContents = document.querySelectorAll('.main-content .tab-content');
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
             const targetTab = tab.dataset.tab;
@@ -259,4 +249,3 @@ async function initializeCore() {
 }
 
 initializeCore();
-
