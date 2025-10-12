@@ -202,6 +202,33 @@
         <div id="buddy-list-content">
             <div class="tool-card">
                <h2 class="text-xl font-bold mb-2">Your Profile</h2>
+               <textarea id="user-profile-text" class="tool-input h-20 text-xs" placeholder="Describe yourself..."></textarea>
+               <button id="save-profile-btn" class="aim-button mt-2">Save Profile</button>
+            </div>
+            <div class="tool-card">
+                 <h2 class="text-xl font-bold mb-2">Buddy List</h2>
+                 <div class="buddies" id="buddies-container"><div class="buddy-group">Buddies (0/0)</div></div>
+                 <h3 class="text-lg font-bold mt-4 mb-2">Add a Buddy</h3>
+                 <input type="text" id="new-buddy-name" class="w-full p-1 mb-2 border border-gray-500" placeholder="Screen Name">
+                 <textarea id="new-buddy-personality" class="w-full p-1 mb-2 h-16 border border-gray-500" placeholder="Personality..."></textarea>
+                 <button id="add-buddy-btn" class="aim-button">Add Buddy</button>
+            </div>
+             <div class="tool-card">
+                 <h2 class="text-xl font-bold mb-2">Data Management</h2>
+                  <div class="flex gap-2">
+                    <button id="export-btn" class="aim-button flex-1">Export</button>
+                    <button id="import-btn" class="aim-button flex-1">Import</button>
+                    <input type="file" id="import-file" accept=".json" style="display: none;">
+                </div>
+             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals and other hidden elements -->
+<div id="zip-filename-modal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
+    <div class="tool-card w-full max-w-md">
+        <h2 class="text-xl font-bold text-white mb-4">Name Your ZIP File</h2>
         <input id="zip-filename-input" type="text" class="tool-input" placeholder="filename...">
         <div class="flex gap-4 mt-4">
             <button id="cancel-zip-btn" class="aim-button flex-1">Cancel</button>
@@ -254,12 +281,8 @@
                     <div class="loader"></div>
                     <button class="send-btn aim-button">Send</button>
                 </div>
-             </div>
+            </div>
         </div>
     </div>
-</div>
-
-
-<!-- Modals and other hidden elements -->
-<div id="zip-filename-modal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
+</template>
 
