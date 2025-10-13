@@ -8,6 +8,7 @@ import * as img2img from 'img2img';
 import * as composer from 'composer';
 import * as sketchpad from 'sketchpad';
 import * as aim from 'aim';
+import * as settings from 'settings';
 
 function waitForElement(selector) {
     return new Promise(resolve => {
@@ -246,6 +247,8 @@ async function initializeCore() {
     composer.initialize(shared);
     sketchpad.initialize(shared);
     aim.initialize(shared);
+    settings.initialize(shared);
 }
 
 initializeCore();
+

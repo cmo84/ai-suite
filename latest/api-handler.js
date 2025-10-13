@@ -8,12 +8,24 @@ export function initializeApi(key) {
     apiKey = key;
 }
 
-const safetySettings = [
-    { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-    { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-    { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-    { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+// Default settings are now more restrictive. Can be updated via updateSafetySettings.
+let safetySettings = [
+    { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+    { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+    { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+    { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
 ];
+
+/**
+ * Updates the safety settings used for API calls.
+ * @param {Array} newSettings - The new array of safety settings objects.
+ */
+export function updateSafetySettings(newSettings) {
+    if (newSettings && Array.isArray(newSettings) && newSettings.length === 4) {
+        console.log("Updating safety settings:", newSettings);
+        safetySettings = newSettings;
+    }
+}
 
 /**
  * Calls a Gemini text generation model.
@@ -123,3 +135,4 @@ export async function callTtsApi(text, voiceName = 'Sulafat') {
         throw new Error("No audio data found in TTS API response.");
     }
 }
+
