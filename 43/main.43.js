@@ -23,8 +23,7 @@ async function loadAssets() {
             "img2img": `${assetPath}${versioned('module-img2img.js')}`,
             "composer": `${assetPath}${versioned('module-composer.js')}`,
             "sketchpad": `${assetPath}${versioned('module-sketchpad.js')}`,
-            "aim": `${assetPath}${versioned('module-aim.js')}`,
-            "settings": `${assetPath}${versioned('module-settings.js')}`
+            "aim": `${assetPath}${versioned('module-aim.js')}`
         }
     };
     const im = document.createElement('script');
@@ -73,4 +72,3 @@ async function initializeApp() {
 
 // --- Start the application ---
 initializeApp();
-
