@@ -27,14 +27,6 @@ function waitForElement(selector) {
 async function initializeCore() {
     await waitForElement('#main-header');
 
-    // --- INITIALIZATION ---
-    const { initializeApi } = await import('api');
-    if (typeof window.SUITE_API_KEY !== 'undefined') {
-        initializeApi(window.SUITE_API_KEY);
-    } else {
-        console.error("API Key not found.");
-    }
-
     // --- TAB SWITCHING ---
     const tabs = document.querySelectorAll('#main-tabs .tab-btn');
     const tabContents = document.querySelectorAll('.main-content .tab-content');
