@@ -8,9 +8,12 @@ export function initializeApi(key) {
     apiKey = key;
 }
 
-const threshold = window.SAFETY_SETTINGS_MODE === 'off' ? 'BLOCK_NONE' : 'BLOCK_MEDIUM_AND_ABOVE';
-const categories = ['HARM_CATEGORY_HARASSMENT', 'HARM_CATEGORY_HATE_SPEECH', 'HARM_CATEGORY_SEXUALLY_EXPLICIT', 'HARM_CATEGORY_DANGEROUS_CONTENT'];
-const safetySettings = categories.map(category => ({ category, threshold }));
+const safetySettings = [
+    { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+    { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+    { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+    { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+];
 
 /**
  * Calls a Gemini text generation model.
