@@ -15,10 +15,11 @@
     <script>
         const apiKey = ""; 
         window.SUITE_API_KEY = apiKey; // Make the key globally accessible
+        window.getSuiteApiKey = () => apiKey;
         
         // --- Development & Versioning Control ---
         const USE_LATEST_BUILD = false; // Set to true for latest commit, false for specific version.
-        const SUITE_VERSION = "48";    // The specific version to use when USE_LATEST_BUILD is false.
+        const SUITE_VERSION = "49";    // The specific version to use when USE_LATEST_BUILD is false.
         window.SUITE_VERSION = SUITE_VERSION; // Make version globally accessible
         const repo = "cmo84/ai-suite@release";
         
