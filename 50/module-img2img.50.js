@@ -28,7 +28,8 @@ export async function initialize(sharedUtils) {
         toggleRecycleBtn: document.getElementById('img2img-toggle-recycle-bin-btn'),
         zipBtn: document.getElementById('img2img-download-zip-btn'),
         zipFilenamePrefix: 'img2img-gallery',
-        onPreview: (image) => shared.openLightbox(image, galleryManager.getImages())
+        onPreview: (image) => shared.openLightbox(image, galleryManager.getImages()),
+        shared: shared
     });
     
     // --- Load Data from DB ---
