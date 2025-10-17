@@ -36,7 +36,8 @@ export async function initialize(sharedUtils) {
         toggleRecycleBtn: document.getElementById('sketch-toggle-recycle-bin-btn'),
         zipBtn: document.getElementById('sketch-download-zip-btn'),
         zipFilenamePrefix: 'sketch-gallery',
-        onPreview: (image) => shared.showImagePreview(image)
+        onPreview: (image) => shared.showImagePreview(image),
+        shared: shared
     });
 
     // --- Load Data from DB ---
