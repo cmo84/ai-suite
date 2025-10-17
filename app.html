@@ -26,6 +26,22 @@
                 <label for="image-count" class="block text-sm font-medium text-gray-400 mb-1 text-center">Number of Images:</label>
                 <input type="number" id="image-count" value="1" min="1" class="tool-input w-28 mx-auto block p-2 text-sm text-center">
             </div>
+            <!-- Aspect Ratio Selector -->
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-400 mb-2 text-center">Aspect Ratio:</label>
+                <div id="aspect-ratio-selector" class="flex flex-wrap justify-center gap-2">
+                    <button class="aspect-ratio-btn selected" data-ratio="1:1" title="1:1 (1024x1024)"><span class="aspect-icon-1-1"></span></button>
+                    <button class="aspect-ratio-btn" data-ratio="2:3" title="2:3 (832x1248)"><span class="aspect-icon-2-3"></span></button>
+                    <button class="aspect-ratio-btn" data-ratio="3:2" title="3:2 (1248x832)"><span class="aspect-icon-3-2"></span></button>
+                    <button class="aspect-ratio-btn" data-ratio="3:4" title="3:4 (864x1184)"><span class="aspect-icon-3-4"></span></button>
+                    <button class="aspect-ratio-btn" data-ratio="4:3" title="4:3 (1184x864)"><span class="aspect-icon-4-3"></span></button>
+                    <button class="aspect-ratio-btn" data-ratio="4:5" title="4:5 (896x1152)"><span class="aspect-icon-4-5"></span></button>
+                    <button class="aspect-ratio-btn" data-ratio="5:4" title="5:4 (1152x896)"><span class="aspect-icon-5-4"></span></button>
+                    <button class="aspect-ratio-btn" data-ratio="9:16" title="9:16 (768x1344)"><span class="aspect-icon-9-16"></span></button>
+                    <button class="aspect-ratio-btn" data-ratio="16:9" title="16:9 (1344x768)"><span class="aspect-icon-16-9"></span></button>
+                    <button class="aspect-ratio-btn" data-ratio="21:9" title="21:9 (1536x672)"><span class="aspect-icon-21-9"></span></button>
+                </div>
+            </div>
              <div class="flex gap-2 mt-4 flex-wrap justify-center">
                  <button id="get-ideas-btn" class="tool-btn tool-btn-secondary">✨ Get Ideas</button>
                  <button id="expand-prompt-btn" class="tool-btn tool-btn-secondary">Expand</button>
