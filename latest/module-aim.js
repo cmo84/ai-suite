@@ -13,9 +13,9 @@ let activeChats = {}; // Tracks open chat tabs and their state
 let currentAttachment = null; // Holds { base64, file } for multimodal chat
 
 const ttsVoices = {
-    "Zephyr": "Bright", "Puck": "Upbeat", "Charon": "Informative", "Kore": "Firm", 
-    "Fenrir": "Excitable", "Leda": "Youthful", "Orus": "Firm", "Aoede": "Breezy", 
-    "Callirrhoe": "Easy-going", "Autonoe": "Bright", "Enceladus": "Breathy", 
+    "Zephyr": "Bright", "Puck": "Upbeat", "Charon": "Informative", "Kore": "Firm",
+    "Fenrir": "Excitable", "Leda": "Youthful", "Orus": "Firm", "Aoede": "Breezy",
+    "Callirrhoe": "Easy-going", "Autonoe": "Bright", "Enceladus": "Breathy",
     "Iapetus": "Clear", "Umbriel": "Easy-going", "Algieba": "Smooth", "Despina": "Smooth",
     "Erinome": "Clear", "Algenib": "Gravelly", "Rasalgethi": "Informative", "Laomedeia": "Upbeat",
     "Achernar": "Soft", "Alnilam": "Firm", "Schedar": "Even", "Gacrux": "Mature",
@@ -72,7 +72,7 @@ export async function initialize(sharedUtils) {
         const personality = personalityInput.value.trim();
 
         if (screenName && personality && !buddies[screenName]) {
-            const newBuddy = { 
+            const newBuddy = {
                 screenName,
                 personality,
                 fontSettings: { family: 'Helvetica', size: '12px' },
@@ -84,7 +84,7 @@ export async function initialize(sharedUtils) {
             buddies[screenName] = newBuddy;
             await db.saveBuddy(newBuddy);
             if (!conversations[screenName]) conversations[screenName] = [];
-            
+
             nameInput.value = '';
             personalityInput.value = '';
             renderBuddyList();
@@ -123,15 +123,15 @@ export async function initialize(sharedUtils) {
                     await loadState();
                     shared.showNotification('Data imported successfully!');
                 } else shared.showNotification('Invalid JSON file.', 'error');
-            } catch (error) { 
+            } catch (error) {
                 shared.showNotification('Error reading file.', 'error');
-                console.error("Import error:", error); 
+                console.error("Import error:", error);
             }
         };
         reader.readAsText(file);
         importFile.value = '';
     });
-    
+
     confirmClearChatBtn.addEventListener('click', async () => {
         if (screenNameToClear) {
             conversations[screenNameToClear] = [];
@@ -171,7 +171,7 @@ export async function initialize(sharedUtils) {
         }
 
         const buddyData = buddies[screenName];
-        
+
         // Create Tab Button
         const tabBtn = document.createElement('button');
         tabBtn.className = 'chat-tab-btn';
@@ -182,9 +182,9 @@ export async function initialize(sharedUtils) {
         // Create Chat Panel
         const panel = createChatPanel(screenName, buddyData);
         chatPanelsContainer.appendChild(panel);
-        
+
         activeChats[screenName] = { tab: tabBtn, panel: panel };
-        
+
         // Event Listeners for Tab
         tabBtn.addEventListener('click', (e) => {
             if (e.target.classList.contains('chat-tab-close-btn')) {
@@ -196,14 +196,14 @@ export async function initialize(sharedUtils) {
 
         setActiveTab(screenName);
     }
-    
+
     function closeChatTab(screenName) {
         const chat = activeChats[screenName];
         if (chat) {
             chat.tab.remove();
             chat.panel.remove();
             delete activeChats[screenName];
-            
+
             const remainingTabs = Object.keys(activeChats);
             if (remainingTabs.length > 0) {
                 setActiveTab(remainingTabs[0]);
@@ -219,13 +219,13 @@ export async function initialize(sharedUtils) {
         activeChats[screenName].tab.classList.add('active');
         activeChats[screenName].panel.classList.add('active');
     }
-    
+
     function createChatPanel(screenName, buddyData) {
         const panel = document.createElement('div');
         panel.id = `chat-panel-${screenName}`;
         panel.className = 'chat-panel';
         panel.dataset.screenName = screenName;
-        
+
         panel.innerHTML = `
             <div class="chat-toolbar">
                 <select class="font-face"></select>
@@ -249,7 +249,7 @@ export async function initialize(sharedUtils) {
                 </div>
             </div>
         `;
-        
+
         // Populate controls and wire up listeners
         const messagesContainer = panel.querySelector('.chat-messages');
         const input = panel.querySelector('.chat-input');
@@ -264,13 +264,13 @@ export async function initialize(sharedUtils) {
         const ttsVoiceSelect = panel.querySelector('.tts-voice-select');
         const modelSelect = panel.querySelector('.model-select');
         const clearChatBtn = panel.querySelector('.clear-chat-btn');
-        
+
         ['Helvetica', 'Arial', 'Times New Roman', 'Courier New', 'Verdana'].forEach(f => fontFaceSelect.add(new Option(f,f)));
         ['10px', '12px', '14px', '16px'].forEach(s => fontSizeSelect.add(new Option(s.replace('px',''),s)));
         Object.entries({15000: 'ASAP', 30000: 'Often', 60000: 'Normal', 180000: 'Slow'}).forEach(([val, txt]) => proactiveFrequency.add(new Option(txt,val)));
         for (const voice in ttsVoices) ttsVoiceSelect.add(new Option(`${voice} (${ttsVoices[voice]})`, voice));
         availableModels.forEach(m => modelSelect.add(new Option(m, m)));
-        
+
         const applyFontSettings = (family, size) => {
             messagesContainer.style.fontFamily = family; messagesContainer.style.fontSize = size;
             input.style.fontFamily = family; input.style.fontSize = size;
@@ -296,10 +296,10 @@ export async function initialize(sharedUtils) {
         ttsToggle.checked = buddyData.ttsEnabled;
         ttsVoiceSelect.value = buddyData.ttsVoice;
         modelSelect.value = buddyData.model;
-        
+
         (conversations[screenName] || []).forEach(msg => displayMessage(messagesContainer, msg.sender, msg.text, msg.isImage, screenName));
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        
+
         sendBtn.onclick = () => handleSendMessage(screenName);
         input.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(screenName); }};
         attachBtn.onclick = () => attachInput.click();
@@ -307,7 +307,7 @@ export async function initialize(sharedUtils) {
 
         return panel;
     }
-    
+
     // --- Chat Logic ---
     function handleAttachment(event, screenName) {
         const file = event.target.files[0];
@@ -333,25 +333,25 @@ export async function initialize(sharedUtils) {
         reader.readAsDataURL(file);
         event.target.value = ''; // Reset input
     }
-    
+
     async function handleSendMessage(screenName) {
         const panel = document.getElementById(`chat-panel-${screenName}`);
         const input = panel.querySelector('.chat-input');
         const messageText = input.value.trim();
         if (!messageText && !currentAttachment) return;
 
-        const messagesContainer = panel.querySelector('.messages');
+        const messagesContainer = panel.querySelector('.chat-messages');
         const loader = panel.querySelector('.loader');
         const sendBtn = panel.querySelector('.send-btn');
         const model = buddies[screenName].model;
-        
+
         addMessageToHistory(screenName, 'You', messageText, !!currentAttachment);
         displayMessage(messagesContainer, 'You', messageText, !!currentAttachment, screenName, currentAttachment?.base64);
         input.value = '';
         if (currentAttachment) {
             document.getElementById(`attachment-preview-${screenName}`).innerHTML = '';
         }
-        
+
         loader.style.display = 'block'; sendBtn.disabled = true;
 
         try {
@@ -380,7 +380,7 @@ export async function initialize(sharedUtils) {
             currentAttachment = null;
         }
     }
-    
+
     async function addMessageToHistory(screenName, sender, text, isImage = false) {
         if (!conversations[screenName]) conversations[screenName] = [];
         const message = { sender, text, isImage };
@@ -391,19 +391,19 @@ export async function initialize(sharedUtils) {
         conversations[screenName].push(message);
         await db.saveConversation(screenName, conversations[screenName]);
     }
-    
+
     function displayMessage(container, sender, text, isImage = false, screenName = '', base64 = null) {
         const messageEl = document.createElement('div');
         messageEl.className = 'chat-message';
         let senderClass = 'system-message';
         if(sender === 'You') senderClass = 'my-message';
         else if (sender !== 'System') senderClass = 'buddy-message';
-        
+
         let contentHTML = `<span class="screen-name ${senderClass}">${screenName || sender}:</span> ${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
         if(isImage && base64) {
              contentHTML += `<div class="chat-image-container"><img src="data:image/png;base64,${base64}" class="chat-image"></div>`;
         }
-        
+
         messageEl.innerHTML = contentHTML;
         container.appendChild(messageEl);
         container.scrollTop = container.scrollHeight;
@@ -416,7 +416,7 @@ export async function initialize(sharedUtils) {
         imgContainer.innerHTML = `<img src="data:image/png;base64,${base64}" class="chat-image" alt="${prompt}"><a href="data:image/png;base64,${base64}" download="${prompt.slice(0,20)}.png" class="download-image-btn">Save</a>`;
         messageEl.appendChild(imgContainer);
     }
-    
+
     function appendAudioControls(messageEl, audioBase64, sampleRate) {
         const pcmData = base64ToArrayBuffer(audioBase64);
         const wavBlob = pcmToWav(pcmData, sampleRate);
@@ -438,11 +438,11 @@ export async function initialize(sharedUtils) {
          const query = `User Profile: "${userProfile}".\nCharacter Personality: "${personality}"\nConversation:\n${history}\nUser Request: "${userPrompt}"`;
          return await api.callTextApi({ contents: [{ parts: [{ text: query }] }], systemInstruction: { parts: [{ text: system }] } }, model);
     }
-    
+
     async function buildTextPayload(screenName) {
          const personality = buddies[screenName].personality;
          const userProfile = await db.loadAppState('userProfile') || 'a user';
-         
+
          const history = (conversations[screenName] || []).map(m => {
              const role = m.sender === 'You' ? 'user' : 'model';
              const parts = [];
@@ -451,7 +451,7 @@ export async function initialize(sharedUtils) {
              else if (m.isImage) parts.push({ text: `[${role === 'user' ? 'I' : 'You'} sent an image]` });
              return { role, parts };
          });
-         
+
          // Add the current attachment if it exists
          if (currentAttachment) {
             history[history.length - 1].parts.push({
@@ -495,7 +495,7 @@ export async function initialize(sharedUtils) {
                 appendAudioControls(msgEl, audioBase64, sampleRate);
             }
             buddy.proactive.awaitingReply = true;
-            buddy.proactive.currentInterval *= 2; 
+            buddy.proactive.currentInterval *= 2;
             buddy.proactive.nextMessageTimestamp = Date.now() + buddy.proactive.currentInterval;
         } catch (error) {
             console.error(`Proactive error for ${screenName}:`, error);
@@ -516,8 +516,9 @@ export async function initialize(sharedUtils) {
             }
         }
     }
-    
+
     // --- Init ---
     await loadState();
     proactiveIntervalCheck = setInterval(proactiveEngine, 5000);
 }
+
