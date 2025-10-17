@@ -23,6 +23,10 @@ export async function initialize(sharedUtils) {
     const loader = document.getElementById('image-loader');
     const errorEl = document.getElementById('image-error');
 
+    // --- Aspect Ratio ---
+    const aspectRatioSelector = document.getElementById('aspect-ratio-selector');
+    let selectedAspectRatio = '1:1';
+
     // --- Preview Pane Elements ---
     const previewPane = document.getElementById('txt2img-preview-pane');
     const previewImage = document.getElementById('txt2img-preview-image');
@@ -127,6 +131,15 @@ export async function initialize(sharedUtils) {
         promptText.value = idea.trim();
     }));
 
+    aspectRatioSelector.addEventListener('click', (e) => {
+        const button = e.target.closest('.aspect-ratio-btn');
+        if (!button) return;
+
+        aspectRatioSelector.querySelector('.selected').classList.remove('selected');
+        button.classList.add('selected');
+        selectedAspectRatio = button.dataset.ratio;
+    });
+
     generateBtn.addEventListener('click', async () => {
         const prompt = promptText.value.trim();
         if (!prompt) return;
@@ -135,7 +148,7 @@ export async function initialize(sharedUtils) {
         if (imageCount === 1) {
             // Single image generation
             await handleApiAction(generateBtn, loader, errorEl, async () => {
-                const base64 = await api.callImageApi({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseModalities: ['IMAGE'] } });
+                const base64 = await api.callImageApi({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseModalities: ['IMAGE'] } }, selectedAspectRatio);
                 const newImage = galleryManager.addImage({ base64, prompt, generationType: 'base', parentId: null });
                 await db.saveImage('txt2img', newImage);
             });
@@ -159,7 +172,7 @@ export async function initialize(sharedUtils) {
             }],
             generationConfig: { responseModalities: ['IMAGE'] }
         };
-        const base64 = await api.callImageApi(payload);
+        const base64 = await api.callImageApi(payload, selectedAspectRatio);
         const newImage = galleryManager.addImage({ base64, prompt, generationType: 'refinement', parentId: selectedImage.id });
         await db.saveImage('txt2img', newImage);
         refinementPrompt.value = '';
@@ -208,7 +221,7 @@ export async function initialize(sharedUtils) {
             if (isCancelled) break;
             progressText.textContent = `Generating image ${i} of ${total}...`;
             try {
-                const base64 = await api.callImageApi({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseModalities: ['IMAGE'] } });
+                const base64 = await api.callImageApi({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseModalities: ['IMAGE'] } }, selectedAspectRatio);
                 const newImage = galleryManager.addImage({ base64, prompt, generationType: 'base', parentId: null });
                 await db.saveImage('txt2img', newImage);
                 successes++;

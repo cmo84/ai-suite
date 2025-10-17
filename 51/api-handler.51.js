@@ -46,13 +46,23 @@ export async function callTextApi(payload, modelName = "gemini-2.5-flash-preview
 /**
  * Calls a Gemini image generation model (Flash Image).
  * @param {object} payload - The full payload for the generateContent API.
+ * @param {string} aspectRatio - The desired aspect ratio for the image, e.g., "1:1", "16:9".
  * @returns {Promise<string>} The Base64 encoded image data.
  */
-export async function callImageApi(payload) {
+export async function callImageApi(payload, aspectRatio = '1:1') {
     const modelName = "gemini-2.5-flash-image-preview";
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${window.getSuiteApiKey()}`;
 
-    const finalPayload = { ...payload, safetySettings };
+    const finalPayload = {
+        ...payload,
+        generationConfig: {
+            ...payload.generationConfig,
+            imageConfig: {
+                aspectRatio: aspectRatio
+            }
+        },
+        safetySettings
+    };
 
     const response = await fetch(apiUrl, {
         method: 'POST',
@@ -118,3 +128,4 @@ export async function callTtsApi(text, voiceName = 'Sulafat') {
         throw new Error("No audio data found in TTS API response.");
     }
 }
+
