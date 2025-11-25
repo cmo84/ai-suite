@@ -297,7 +297,7 @@ export async function initialize(sharedUtils) {
         ttsVoiceSelect.value = buddyData.ttsVoice;
         modelSelect.value = buddyData.model;
 
-        (conversations[screenName] || []).forEach(msg => displayMessage(messagesContainer, msg.sender, msg.text, msg.isImage, screenName));
+        (conversations[screenName] || []).forEach(msg => displayMessage(messagesContainer, msg.sender, msg.text, msg.isImage, msg.sender));
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
         sendBtn.onclick = () => handleSendMessage(screenName);
@@ -346,7 +346,7 @@ export async function initialize(sharedUtils) {
         const model = buddies[screenName].model;
 
         addMessageToHistory(screenName, 'You', messageText, !!currentAttachment);
-        displayMessage(messagesContainer, 'You', messageText, !!currentAttachment, screenName, currentAttachment?.base64);
+        displayMessage(messagesContainer, 'You', messageText, !!currentAttachment, 'You', currentAttachment?.base64);
         input.value = '';
         if (currentAttachment) {
             document.getElementById(`attachment-preview-${screenName}`).innerHTML = '';
@@ -521,4 +521,3 @@ export async function initialize(sharedUtils) {
     await loadState();
     proactiveIntervalCheck = setInterval(proactiveEngine, 5000);
 }
-
