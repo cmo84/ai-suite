@@ -50,7 +50,7 @@ export async function callTextApi(payload, modelName = "gemini-2.5-flash-preview
  * @returns {Promise<string>} The Base64 encoded image data.
  */
 export async function callImageApi(payload, aspectRatio = '1:1') {
-    const modelName = "gemini-2.5-flash-preview-09-2025";
+    const modelName = "gemini-2.5-flash-image";
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${window.getSuiteApiKey()}`;
 
     const finalPayload = {
