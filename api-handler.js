@@ -16,7 +16,7 @@ const safetySettings = [
  * @param {string} modelName - The name of the model to use.
  * @returns {Promise<string>} The generated text.
  */
-export async function callTextApi(payload, modelName = "gemini-2.5-flash") {
+export async function callTextApi(payload, modelName = "gemini-2.5-flash-preview-05-20") {
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${window.getSuiteApiKey()}`;
     
     const finalPayload = { ...payload, safetySettings };
@@ -50,18 +50,27 @@ export async function callTextApi(payload, modelName = "gemini-2.5-flash") {
  * @returns {Promise<string>} The Base64 encoded image data.
  */
 export async function callImageApi(payload, aspectRatio = '1:1') {
-    const modelName = "gemini-2.5-flash-image-preview";
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${window.getSuiteApiKey()}`;
+    // Model updated to stable Imagen 4.0 as only Imagen models are currently functional
+    const modelName = "imagen-4.0-generate-001";
+    // Endpoint updated to :predict for Imagen compatibility
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:predict?key=${window.getSuiteApiKey()}`;
+
+    // Map Gemini-style payload to the Imagen instances/parameters schema
+    const prompt = payload.contents?.[0]?.parts?.find(p => p.text)?.text || "";
+    const baseImage = payload.contents?.[0]?.parts?.find(p => p.inlineData)?.inlineData?.data;
 
     const finalPayload = {
-        ...payload,
-        generationConfig: {
-            ...payload.generationConfig,
-        //    imageConfig: {
-        //        aspectRatio: aspectRatio
-        //    }
-        }
-        //safetySettings
+        instances: [
+            { 
+                prompt: prompt,
+                image: baseImage ? { bytesBase64Encoded: baseImage } : undefined
+            }
+        ],
+        parameters: {
+            sampleCount: 1,
+            aspectRatio: aspectRatio
+        },
+        safetySettings
     };
 
     const response = await fetch(apiUrl, {
@@ -73,14 +82,15 @@ export async function callImageApi(payload, aspectRatio = '1:1') {
     if (!response.ok) throw new Error(`API Error: ${response.status} ${response.statusText}`);
     
     const result = await response.json();
-    const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+    // Parse result based on Imagen's prediction output schema
+    const base64Data = result.predictions?.[0]?.bytesBase64Encoded;
     
     if (base64Data) {
         return base64Data;
     } else {
         let reason = "No image data found in API response.";
-        if (result?.candidates?.[0]?.finishReason && result.candidates[0].finishReason !== 'STOP') {
-             reason = `Generation stopped. Reason: ${result.candidates[0].finishReason}`;
+        if (result?.error) {
+             reason = `API Error: ${result.error.message}`;
         }
         throw new Error(reason);
     }
@@ -128,4 +138,3 @@ export async function callTtsApi(text, voiceName = 'Sulafat') {
         throw new Error("No audio data found in TTS API response.");
     }
 }
-
