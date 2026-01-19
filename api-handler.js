@@ -16,7 +16,7 @@ const safetySettings = [
  * @param {string} modelName - The name of the model to use.
  * @returns {Promise<string>} The generated text.
  */
-export async function callTextApi(payload, modelName = "gemini-2.5-flash-preview-09-2025") {
+export async function callTextApi(payload, modelName = "gemini-2.5-flash") {
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${window.getSuiteApiKey()}`;
     
     const finalPayload = { ...payload, safetySettings };
@@ -57,11 +57,11 @@ export async function callImageApi(payload, aspectRatio = '1:1') {
         ...payload,
         generationConfig: {
             ...payload.generationConfig,
-            imageConfig: {
-                aspectRatio: aspectRatio
-            }
-        },
-        safetySettings
+        //    imageConfig: {
+        //        aspectRatio: aspectRatio
+        //    }
+        }
+        //safetySettings
     };
 
     const response = await fetch(apiUrl, {
