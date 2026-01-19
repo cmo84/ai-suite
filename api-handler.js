@@ -52,7 +52,7 @@ export async function callTextApi(payload, modelName = "gemini-2.5-flash-preview
 export async function callImageApi(payload, aspectRatio = '1:1') {
     // Model updated to stable Imagen 4.0 as only Imagen models are currently functional
     //const modelName = "imagen-4.0-generate-001";
-    const modelName = "imagen-3.0-fast-generate-001";
+    const modelName = "imagen-3.0-generate-001";
     
     // Endpoint updated to :predict for Imagen compatibility
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:predict?key=${window.getSuiteApiKey()}`;
