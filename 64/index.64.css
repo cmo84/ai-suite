@@ -1,0 +1,190 @@
+/* --- Base & Theme --- */
+html {
+    font-family: 'Inter', sans-serif; 
+}
+body { 
+    background-color: #111827; /* Dark background for the whole page */
+    color: #d1d5db; /* Lighter text for dark theme */
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden; /* Prevent body scroll */
+}
+
+/* --- New Tab-based Header --- */
+#main-header {
+    background-color: #1f2937;
+    flex-shrink: 0;
+    border-bottom: 1px solid #374151;
+    padding: 0 1rem;
+}
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+.app-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #f9fafb;
+}
+#main-tabs {
+    display: flex;
+    gap: 0.25rem;
+}
+#main-tabs .tab-btn {
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+    border: none;
+    border-bottom: 3px solid transparent;
+    background-color: transparent;
+    color: #9ca3af;
+    cursor: pointer;
+}
+#main-tabs .tab-btn:hover {
+    color: #f9fafb;
+}
+/* This class is added by suite-core.js */
+#main-tabs .mode-button-active {
+    color: #818cf8;
+    border-bottom-color: #818cf8;
+}
+
+/* --- Main Content Area --- */
+.main-content { 
+    flex-grow: 1; 
+    background: #111827; 
+    padding: 1.5rem; 
+    overflow-y: auto; 
+    height: calc(100vh - 57px); /* Adjust based on header height */
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; max-width: 1400px; margin: 0 auto; height: 100%; }
+
+/* --- Re-themed Component Styles --- */
+.tool-content { color: #d1d5db; }
+.tool-card { 
+    background-color: #1f2937; 
+    border: 1px solid #374151; 
+    border-radius: 8px; 
+    padding: 1.5rem; 
+    margin-bottom: 2rem; 
+}
+.tool-btn { background-color: #4f46e5; color: white; font-weight: bold; padding: 0.5rem 1rem; border-radius: 0.5rem; transition: background-color 0.3s; cursor: pointer; border: 1px solid #4338ca; }
+.tool-btn-secondary { background-color: #374151; border-color: #4b5563; }
+.tool-btn-danger { background-color: #ef4444; border-color: #dc2626;}
+.tool-btn:hover { opacity: 0.9; }
+.tool-btn:disabled { background-color: #4b5563; cursor: not-allowed; }
+textarea.tool-input, input.tool-input { 
+    width: 100%; 
+    background-color: #374151; 
+    color: #f9fafb; 
+    padding: 0.75rem; 
+    border-radius: 0.375rem; 
+    border: 1px solid #4b5563; 
+}
+textarea.tool-input:focus, input.tool-input:focus {
+    outline: 2px solid #4f46e5;
+    border-color: transparent;
+}
+
+
+/* --- AIM Client Specific Styles --- */
+.aim-button { background: #d4d0c8; color: #1f2937; border-color: #f0f0f0 #808080 #808080 #f0f0f0; border-style: solid; border-width: 1px; font-family: "MS Sans Serif", "Geneva", "sans-serif"; font-size: 12px; padding: 0.25rem 0.75rem; }
+.aim-button:active { border-color: #808080 #f0f0f0 #f0f0f0 #808080; }
+#chat-tab { height: 100%; padding-bottom: 0; }
+#aim-container { height: 100%; }
+#aim-sidebar .tool-card { margin-bottom: 1rem; }
+#aim-sidebar .buddies { background: #111827; color: #d1d5db; border: 1px solid #374151; padding: 5px; overflow-y: auto; }
+.buddy-group { font-weight: bold; margin-top: 5px; color: #d1d5db; }
+.buddy { cursor: pointer; padding: 4px 8px; display: flex; align-items: center; color: #d1d5db; border-radius: 4px; }
+.buddy:hover { background: #374151; }
+
+/* New Tabbed Chat UI */
+#chat-tabs-bar .chat-tab-btn { background-color: #1f2937; color: #9ca3af; padding: 0.5rem 1rem; border: 1px solid #374151; border-bottom: none; border-radius: 6px 6px 0 0; cursor: pointer; position: relative; top: 1px; }
+#chat-tabs-bar .chat-tab-btn.active { background-color: #374151; color: #f9fafb; font-weight: 500; }
+.chat-tab-close-btn { margin-left: 8px; font-weight: bold; }
+.chat-tab-close-btn:hover { color: #ef4444; }
+.chat-panel { display: none; flex-direction: column; height: 100%; }
+.chat-panel.active { display: flex; }
+.chat-toolbar { padding: 0.5rem; background-color: #1f2937; border-bottom: 1px solid #374151; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+.chat-toolbar select, .chat-toolbar label { font-size: 12px; }
+.chat-messages { flex-grow: 1; padding: 1rem; overflow-y: auto; background-color: #111827; }
+.chat-message { margin-bottom: 0.75rem; }
+.chat-message .screen-name { font-weight: bold; }
+.chat-message .buddy-message { color: #a78bfa; }
+.chat-message .my-message { color: #60a5fa; }
+.chat-message .system-message { color: #6b7280; font-style: italic; }
+.chat-input-area { border-top: 1px solid #374151; padding: 1rem; background-color: #1f2937; }
+.chat-input-area .tool-input { min-height: 60px; }
+.chat-controls { display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
+#attachment-preview { font-size: 12px; color: #9ca3af; display: flex; align-items: center; gap: 0.5rem; }
+#attachment-preview img { max-height: 40px; border-radius: 4px; }
+
+/* --- Aspect Ratio Selector Styles --- */
+.aspect-ratio-btn { background-color: #374151; border: 2px solid #4b5563; border-radius: 6px; padding: 8px; cursor: pointer; transition: border-color 0.2s; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; }
+.aspect-ratio-btn:hover { border-color: #6b7280; }
+.aspect-ratio-btn.selected { border-color: #4f46e5; }
+.aspect-ratio-btn span { display: block; background-color: #9ca3af; border-radius: 2px; }
+.aspect-ratio-btn.selected span { background-color: #818cf8; }
+.aspect-icon-1-1 { width: 24px; height: 24px; }
+.aspect-icon-2-3 { width: 18px; height: 27px; }
+.aspect-icon-3-2 { width: 27px; height: 18px; }
+.aspect-icon-3-4 { width: 20px; height: 26px; }
+.aspect-icon-4-3 { width: 26px; height: 20px; }
+.aspect-icon-4-5 { width: 20px; height: 25px; }
+.aspect-icon-5-4 { width: 25px; height: 20px; }
+.aspect-icon-9-16 { width: 16px; height: 28px; }
+.aspect-icon-16-9 { width: 28px; height: 16px; }
+.aspect-icon-21-9 { width: 30px; height: 14px; }
+
+/* --- General Component Styles --- */
+.loader { border: 3px solid #374151; border-top: 3px solid #4f46e5; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; display: none; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.gallery-container { background-color: #111827; border: 1px solid #374151; min-height: 150px; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; padding: 1rem; border-radius: 0.5rem; }
+.image-wrapper { position: relative; }
+.gallery-img { width: 100%; height: auto; border-radius: 0.5rem; cursor: pointer; border: 4px solid transparent; aspect-ratio: 1 / 1; object-fit: cover; }
+.gallery-img.selected { border-color: #4f46e5; }
+.img-overlay { position: absolute; top: 0.5rem; right: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+.image-wrapper:hover .img-overlay { opacity: 1; pointer-events: auto; }
+.overlay-btn { background-color: rgba(0,0,0,0.6); color: white; border: none; border-radius: 9999px; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+#sketchpad { 
+    touch-action: none; 
+    background-color: #000; 
+    border-radius: 0.5rem; 
+    border: 1px solid #374151;
+    width: 100%;
+    height: 100%;
+}
+.drop-zone { border: 2px dashed #4b5563; border-radius: 0.5rem; min-height: 150px; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: background-color 0.3s, border-color 0.3s; cursor: pointer; background-color: #1f2937; color: #9ca3af; }
+.drop-zone.drag-over { background-color: #374151; border-color: #4f46e5; }
+.drop-zone img { max-width: 100%; max-height: 120px; border-radius: 0.25rem; pointer-events: none; }
+.chat-image-container { position: relative; display: inline-block; max-width: 90%; margin-top: 8px; }
+.chat-messages .chat-message img.chat-image { max-width: 100%; max-height: 250px; border-radius: 4px; display: block; }
+.download-image-btn { position: absolute; top: 5px; right: 5px; display: none; background: rgba(0,0,0,0.6); color: white; padding: 3px 6px; border-radius: 3px; text-decoration: none; font-size: 10px; border: 1px solid #fff; }
+.chat-image-container:hover .download-image-btn { display: block; }
+
+/* --- Lightbox Styles --- */
+#lightbox.hidden { display: none; }
+#lightbox { position: fixed; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); display: flex; justify-content: center; align-items: center; }
+.lightbox-content { max-width: 95vw; max-height: 90vh; object-fit: contain; cursor: pointer; transition: transform 0.1s linear; }
+.lightbox-content.native-size { max-width: none; max-height: none; cursor: grab; user-select: none; }
+.lightbox-content.native-size.panning { cursor: grabbing; }
+.lightbox-close { position: absolute; top: 15px; right: 35px; color: #fff; font-size: 40px; font-weight: bold; cursor: pointer; }
+.lightbox-filename { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #ccc; font-size: 18px; background-color: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 5px; }
+.lightbox-prev, .lightbox-next { cursor: pointer; position: absolute; top: 50%; transform: translateY(-50%); width: auto; padding: 16px; color: white; font-weight: bold; font-size: 30px; transition: 0.3s; user-select: none; }
+.lightbox-prev { left: 10px; }
+.lightbox-next { right: 10px; }
+.lightbox-prev:hover, .lightbox-next:hover { background-color: rgba(255, 255, 255, 0.2); }
+
+/* --- Notification Styles --- */
+#notification-container { position: fixed; top: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
+.notification { padding: 15px 20px; border-radius: 5px; color: #fff; font-family: 'Inter', sans-serif; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); opacity: 1; transform: translateX(0); transition: opacity 0.5s, transform 0.5s; }
+.notification.success { background-color: #28a745; }
+.notification.error { background-color: #dc3545; }
+.notification.fade-out { opacity: 0; transform: translateX(100%); }
+
