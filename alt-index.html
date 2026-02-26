@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Creative AI Suite</title>
+    <!-- External Libraries -->
+    <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- SCRIPT LOADER -->
+    <script>
+        const apiKey = ""; 
+        window.SUITE_API_KEY = apiKey; // Make the key globally accessible
+        window.getSuiteApiKey = () => apiKey;
+
+        let EXPERIMENTAL_IMAGE_MODEL = "gemini-2.5-flash-image-preview";
+        const EXPERIMENTAL_TEXT_MODEL = "gemini-2.5-flash-preview-05-20";
+        const DISABLE_SAFETIES = true;
+
+        const originalFetch = window.fetch;
+        window.fetch = async function(...args) {
+            let [resource, config] = args;
+            let isGeminiImageTranslation = false;
+
+            if (typeof resource === 'string' && resource.includes('generativelanguage.googleapis.com')) {
+                if (resource.includes(':predict') || resource.includes('imagen')) {
+                    if (EXPERIMENTAL_IMAGE_MODEL.startsWith('gemini')) {
+                        isGeminiImageTranslation = true;
+                        resource = resource.replace(/models\/[^:]+:[^?]+/, `models/${EXPERIMENTAL_IMAGE_MODEL}:generateContent`);
+                        if (config && config.body) {
+                            try {
+                                const bodyObj = JSON.parse(config.body);
+                                const prompt = bodyObj.instances?.[0]?.prompt || "";
+                                const baseImage = bodyObj.instances?.[0]?.image?.bytesBase64Encoded;
+                                const parts = [{ text: prompt }];
+                                if (baseImage) {
+                                    parts.push({ inlineData: { mimeType: "image/png", data: baseImage } });
+                                }
+                                const newBody = {
+                                    contents: [{ parts }],
+                                    generationConfig: { responseModalities: ["IMAGE"] }
+                                };
+                                if (!DISABLE_SAFETIES && bodyObj.safetySettings) {
+                                    newBody.safetySettings = bodyObj.safetySettings;
+                                }
+                                config.body = JSON.stringify(newBody);
+                            } catch (e) {}
+                        }
+                    } else {
+                        resource = resource.replace(/models\/[^:]+:/, `models/${EXPERIMENTAL_IMAGE_MODEL}:`);
+                    }
+                } else if (resource.includes(':generateContent') && !resource.includes('-tts') && !isGeminiImageTranslation) {
+                    resource = resource.replace(/models\/[^:]+:/, `models/${EXPERIMENTAL_TEXT_MODEL}:`);
+                }
+
+                if (DISABLE_SAFETIES && config && config.body && !isGeminiImageTranslation) {
+                    try {
+                        const bodyObj = JSON.parse(config.body);
+                        if (bodyObj.safetySettings) {
+                            delete bodyObj.safetySettings;
+                        }
+                        config.body = JSON.stringify(bodyObj);
+                    } catch (e) {}
+                }
+            }
+            
+            const response = await originalFetch(resource, config);
+            
+            if (isGeminiImageTranslation && response.ok) {
+                try {
+                    const result = await response.clone().json();
+                    const base64 = result.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+                    if (base64) {
+                        return new Response(JSON.stringify({ predictions: [{ bytesBase64Encoded: base64 }] }), {
+                            status: 200,
+                            statusText: "OK",
+                            headers: response.headers
+                        });
+                    }
+                } catch (e) {}
+            }
+            
+            return response;
+        };
+        
+        // --- Development & Versioning Control ---
+        const USE_LATEST_BUILD = false; // Set to true for latest commit, false for specific version.
+        const SUITE_VERSION = "65";    // The specific version to use when USE_LATEST_BUILD is false.
+        window.SUITE_VERSION = SUITE_VERSION; // Make version globally accessible
+        const repo = "cmo84/ai-suite@release";
+        
+        /**
+         * Creates a versioned filename if not using the latest build.
+         * e.g., 'main.js' becomes 'main.37.js'
+         * @param {string} filename - The original filename.
+         * @returns {string} The potentially versioned filename.
+         */
+        const getVersionedFilename = (filename) => {
+            if (USE_LATEST_BUILD) return filename;
+            const parts = filename.split('.');
+            const extension = parts.pop();
+            const name = parts.join('.');
+            return `${name}.${SUITE_VERSION}.${extension}`;
+        };
+        window.getVersionedFilename = getVersionedFilename; // Make globally available for main.js
+
+        const assetPath = USE_LATEST_BUILD 
+            ? `https://cdn.jsdelivr.net/gh/${repo}/latest/` 
+            : `https://cdn.jsdelivr.net/gh/${repo}/${SUITE_VERSION}/`;
+        window.assetPath = assetPath;
+        
+        // Dynamically load the main bootstrap script with the correctly versioned filename
+        const mainScript = document.createElement('script');
+        mainScript.type = 'module';
+        mainScript.src = `${assetPath}${getVersionedFilename('main.js')}`;
+        document.head.appendChild(mainScript);
+
+        const observer = new MutationObserver((mutations, obs) => {
+            const promptTextArea = document.getElementById('prompt-text');
+            if (promptTextArea && !document.getElementById('experimental-model-selector-container')) {
+                const selectorHtml = `
+                    <div class="mt-4" id="experimental-model-selector-container">
+                        <label class="block text-sm font-medium text-gray-400 mb-1 text-center">Image Model Override:</label>
+                        <select id="experimental-model-selector" class="tool-input w-full mx-auto block p-2 text-sm text-center">
+                            <option value="imagen-3.0-generate-001">imagen-3.0-generate-001 (Current Stable)</option>
+                            <option value="imagen-3.0-fast-generate-001">imagen-3.0-fast-generate-001 (Fast)</option>
+                            <option value="imagen-4.0-generate-001">imagen-4.0-generate-001 (Newer/Experimental)</option>
+                            <option value="gemini-2.5-flash-image-preview" selected>gemini-2.5-flash-image-preview (Nano Banana)</option>
+                            <option value="gemini-3-pro-image-preview-11-2025">gemini-3-pro-image-preview-11-2025 (Pro Image)</option>
+                        </select>
+                    </div>
+                `;
+                promptTextArea.insertAdjacentHTML('afterend', selectorHtml);
+                document.getElementById('experimental-model-selector').addEventListener('change', (e) => {
+                    EXPERIMENTAL_IMAGE_MODEL = e.target.value;
+                });
+                obs.disconnect();
+            }
+        });
+        observer.observe(document.documentElement, { childList: true, subtree: true });
+    </script>
+</head>
+<body class="bg-[#004e98] text-xs overflow-hidden p-0 m-0 overscroll-none">
+    <!-- The application content will be injected here by main.js -->
+</body>
+</html>
